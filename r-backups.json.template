@@ -1,0 +1,10 @@
+{
+    "host": "",
+    "user": "",
+    "password": "",
+    "database_name": "",
+    "port": 5432,
+    "backups_dir": "",
+    "migrations_dir": "",
+    "changelogs_dir": ""
+}
