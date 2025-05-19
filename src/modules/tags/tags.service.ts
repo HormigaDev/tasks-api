@@ -27,7 +27,7 @@ export class TagsService extends UtilsService<Tag> {
             const tag = new Tag();
             tag.name = dto.name;
             tag.user = this.user;
-            tag.color = dto.color || '#000000';
+            tag.color = dto.color;
 
             return await this.repository.save(tag);
         } catch (err) {
@@ -61,11 +61,12 @@ export class TagsService extends UtilsService<Tag> {
             const query = this.repository
                 .createQueryBuilder('tag')
                 .orderBy(`tag.${filters.orderBy}`, filters.order);
-            this.setPagination(query, filters.pagination);
+
             if (filters.query) {
                 query.andWhere('tag.name ilike :value', { value: `%${filters.query}%` });
             }
 
+            this.setPagination(query, filters.pagination);
             return await query.getManyAndCount();
         } catch (err) {
             this.handleError('find', err);
