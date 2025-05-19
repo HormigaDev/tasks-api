@@ -67,7 +67,7 @@ export class UsersService extends UtilsService<User> {
         }
     }
 
-    async findById(id: number, includeRoles: boolean = false): Promise<User> {
+    async findById(id: number, { includeRoles } = { includeRoles: false }): Promise<User> {
         try {
             let query = this.repository
                 .createQueryBuilder('user')
@@ -91,8 +91,8 @@ export class UsersService extends UtilsService<User> {
                 user.isAdmin = isAdmin;
             }
             return user;
-        } catch (error) {
-            this.handleError('findById', error);
+        } catch (err) {
+            this.handleError('findById', err);
         }
     }
 
@@ -101,8 +101,8 @@ export class UsersService extends UtilsService<User> {
             const user = await this.repository.findOneBy({ email });
             await this.validateStatus(user.id);
             return user;
-        } catch (error) {
-            this.handleError('findOneByEmail', error);
+        } catch (err) {
+            this.handleError('findOneByEmail', err);
         }
     }
 
@@ -112,8 +112,8 @@ export class UsersService extends UtilsService<User> {
             if (exists) {
                 throw new BadRequestException('User already exists');
             }
-        } catch (error) {
-            this.handleError('existsUserByEmail', error);
+        } catch (err) {
+            this.handleError('existsUserByEmail', err);
         }
     }
 
@@ -126,10 +126,7 @@ export class UsersService extends UtilsService<User> {
                 user.email = dto.email;
                 user.name = dto.name;
                 user.password = await this.authService.hashPassword(dto.password);
-
-                const status = new UserStatus();
-                status.id = UserStatus.Active;
-                user.status = status;
+                user.status = UserStatus.active;
 
                 const savedUser = await manager.save(User, user);
                 const roles = await manager.find(Role, {
@@ -154,18 +151,41 @@ export class UsersService extends UtilsService<User> {
             await this.findById(id);
             await this.updateEntity(id, dto);
             return await this.findById(id);
-        } catch (error) {
-            this.handleError('update', error);
+        } catch (err) {
+            this.handleError('update', err);
+        }
+    }
+
+    async updateUserRoles(id: number, roles: number[]): Promise<User> {
+        try {
+            await this.validateStatus(id);
+            const user = await this.findById(id);
+            const newRoles = await this.repository.manager.find(Role, {
+                where: { id: In(roles) },
+            });
+
+            if (newRoles.length !== roles.length) {
+                throw new BadRequestException('Uno o más roles no existen');
+            }
+
+            await this.repository
+                .createQueryBuilder()
+                .update()
+                .set({ roles: newRoles })
+                .where('id = :id', { id })
+                .execute();
+
+            return await this.findById(id, { includeRoles: true });
+        } catch (err) {
+            this.handleError('updateUserRoles', err);
         }
     }
 
     async delete(id: number): Promise<User> {
         try {
-            const status = new UserStatus();
-            status.id = UserStatus.Deleted;
-            return await this.setUserStatus(id, status);
-        } catch (error) {
-            this.handleError('delete', error);
+            return await this.setUserStatus(id, UserStatus.deleted);
+        } catch (err) {
+            this.handleError('delete', err);
         }
     }
 
@@ -178,8 +198,8 @@ export class UsersService extends UtilsService<User> {
                 .set({ password: await this.authService.hashPassword(password) })
                 .where('id = :id', { id })
                 .execute();
-        } catch (error) {
-            this.handleError('setUserPassword', error);
+        } catch (err) {
+            this.handleError('setUserPassword', err);
         }
     }
 

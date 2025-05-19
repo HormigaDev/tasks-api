@@ -24,8 +24,8 @@ export class RolesService extends UtilsService<Role> {
                 .innerJoin('role.users', 'user')
                 .where('user.id = :id', { id })
                 .getMany();
-        } catch (error) {
-            this.handleError('findByUser', error);
+        } catch (err) {
+            this.handleError('findByUser', err);
         }
     }
 
@@ -36,8 +36,8 @@ export class RolesService extends UtilsService<Role> {
             role.permissions = dto.permissions;
 
             return await this.repository.save(role);
-        } catch (error) {
-            this.handleError('create', error);
+        } catch (err) {
+            this.handleError('create', err);
         }
     }
 
@@ -63,8 +63,8 @@ export class RolesService extends UtilsService<Role> {
                 throw new NotFoundException('Role not found');
             }
             return role;
-        } catch (error) {
-            this.handleError('findOne', error);
+        } catch (err) {
+            this.handleError('findOne', err);
         }
     }
 
@@ -73,8 +73,8 @@ export class RolesService extends UtilsService<Role> {
             const role = await this.findOne(id);
             await this.updateEntity(role.id, dto);
             return await this.findOne(id);
-        } catch (error) {
-            this.handleError('update', error);
+        } catch (err) {
+            this.handleError('update', err);
         }
     }
 
@@ -83,8 +83,8 @@ export class RolesService extends UtilsService<Role> {
             const role = await this.findOne(id);
             await this.repository.delete({ id });
             return role;
-        } catch (error) {
-            this.handleError('delete', error);
+        } catch (err) {
+            this.handleError('delete', err);
         }
     }
 }

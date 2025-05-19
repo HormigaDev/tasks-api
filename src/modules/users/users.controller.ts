@@ -25,6 +25,7 @@ import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 import { UserFindFilters } from './DTOs/user-find-filters.dto';
 import { ContextService } from '../context/context.service';
 import { UserStatus } from 'src/database/model/entities/user-status.entity';
+import { UpdateUserRolesDto } from './DTOs/update-user-roles.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, UserStatusGuard, PermissionsGuard)
@@ -47,7 +48,7 @@ export class UsersController {
     @RequirePermissions([Permissions.ReadMySelf])
     async getInfo(@Req() req: Request) {
         const userId: number = req['user']['userId'];
-        const user = await this.service.findById(userId, true);
+        const user = await this.service.findById(userId, { includeRoles: true });
         delete user.password;
         return { user };
     }
@@ -56,7 +57,7 @@ export class UsersController {
     @HttpCode(200)
     @RequirePermissions([Permissions.ReadUsers])
     async getUserInfo(@Param('id', IdPipe) id: number) {
-        const user = await this.service.findById(id, true);
+        const user = await this.service.findById(id, { includeRoles: true });
         delete user.password;
         return { user };
     }
@@ -70,15 +71,11 @@ export class UsersController {
         return { user };
     }
 
-    @Put('/me')
+    @Put('/me/inactive')
     @HttpCode(204)
     @RequirePermissions([Permissions.UpdateMySelf])
     async inactiveUser() {
-        const status = new UserStatus();
-        status.id = UserStatus.Inactive;
-        const id = this.context.getUserId();
-
-        await this.service.setUserStatus(id, status);
+        await this.service.setUserStatus(this.context.userId, UserStatus.inactive);
         return {};
     }
 
@@ -87,7 +84,7 @@ export class UsersController {
     @RequirePermissions([Permissions.UpdateMySelf])
     async updateMySelfUser(@Body() body: UpdateUserDto) {
         delete body.roles;
-        await this.service.update(this.context.getUserId(), body);
+        await this.service.update(this.context.userId, body);
         return { message: 'Usuario actualizado con éxito' };
     }
 
@@ -99,11 +96,19 @@ export class UsersController {
         return { message: 'Usuario actualizado con éxito' };
     }
 
+    @Put('/:id')
+    @HttpCode(200)
+    @RequirePermissions([Permissions.UpdateUsers])
+    async updateUserRoles(@Body() body: UpdateUserRolesDto, @Param('id', IdPipe) id: number) {
+        await this.service.updateUserRoles(id, body.roles);
+        return { message: 'Usuario actualizado con éxito' };
+    }
+
     @Delete('/me')
     @HttpCode(204)
     @RequirePermissions([Permissions.DeleteMySelf])
     async deleteMySelf() {
-        await this.service.delete(this.context.getUserId());
+        await this.service.delete(this.context.userId);
         return {};
     }
 
