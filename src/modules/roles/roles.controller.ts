@@ -7,6 +7,7 @@ import {
     Param,
     Post,
     Put,
+    Query,
     Req,
     UseGuards,
 } from '@nestjs/common';
@@ -21,6 +22,7 @@ import { IdPipe } from 'src/common/pipes/id.pipe';
 import { Request } from 'express';
 import { UsersService } from '../users/users.service';
 import { UserStatusGuard } from 'src/common/guards/user-status.guard';
+import { RoleFindFilters } from './DTOs/role-find-filters.dto';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard, UserStatusGuard, PermissionsGuard)
@@ -36,7 +38,7 @@ export class RolesController {
     @RequirePermissions([Permissions.ReadRoles, Permissions.CreateRoles])
     async getPermissions(@Req() req: Request) {
         const userId: number = req['user']['userId'];
-        const user = await this.usersService.findById(userId, true);
+        const user = await this.usersService.findById(userId, { includeRoles: true });
         const permissions = PermissionsDict.filter((perm) => {
             return (user.permissions & perm.id) === perm.id;
         });
@@ -47,7 +49,10 @@ export class RolesController {
     @Get('/')
     @HttpCode(200)
     @RequirePermissions([Permissions.ReadRoles])
-    async getRoles() {}
+    async getRoles(@Query() filters: RoleFindFilters) {
+        const [roles, count] = await this.service.find(filters);
+        return { roles, count };
+    }
 
     @Post('/')
     @HttpCode(201)

@@ -63,5 +63,5 @@ export class UserFindFilters {
         message:
             'Si se incluye la especificación de usuarios bloqueados la propiedad debe ser un booleano',
     })
-    includeBlockeds: boolean;
+    includeBlockeds?: boolean;
 }

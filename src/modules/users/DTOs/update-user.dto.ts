@@ -12,7 +12,9 @@ import {
 export class UpdateUserDto {
     @IsOptional()
     @IsString({ message: 'El nombre de usuario debe ser un string válido.' })
-    @Matches(/^[a-zA-Z0-9]$/, { message: 'El nombre de usuario debe ser alfanumérico.' })
+    @Matches(/^[\p{L}0-9 _-]+$/u, {
+        message: 'El nombre debe ser alfa numérico con posibilidad de espacios y guiones (-, _)',
+    })
     readonly name?: string;
 
     @IsOptional()

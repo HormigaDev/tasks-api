@@ -27,7 +27,7 @@ export class PermissionsGuard implements CanActivate {
             throw new ForbiddenException('Usuario no encontrado.');
         }
 
-        const user = await this.usersService.findById(userId, true);
+        const user = await this.usersService.findById(userId, { includeRoles: true });
         if (user.status.id !== UserStatus.Active) {
             throw new ForbiddenException('Usuario no activo.');
         }
