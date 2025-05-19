@@ -7,11 +7,16 @@ import {
     ArrayNotEmpty,
     ArrayMinSize,
     IsInt,
+    Length,
 } from 'class-validator';
 
 export class CreateUserDto {
     @IsNotEmpty({ message: 'El nombre de usuario es obligatorio.' })
     @IsString({ message: 'El nombre de usuario debe ser un string válido.' })
+    @Length(2, 255, { message: 'El nombre debe tener entre 2 y 255 caracteres' })
+    @Matches(/^[\p{L}0-9 _-]+$/u, {
+        message: 'El nombre debe ser alfa numérico con posibilidad de espacios y guiones (-, _)',
+    })
     readonly name: string;
 
     @IsNotEmpty({ message: 'El correo electrónico es obligatorio.' })

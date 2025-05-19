@@ -18,6 +18,9 @@ import { ChangePasswordDto } from 'src/common/validators/change-password.dto';
 import { Cache } from 'cache-manager';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { UserStatusGuard } from 'src/common/guards/user-status.guard';
+import { RequirePermissions } from 'src/common/decorators/require-permissions.decorator';
+import { Permissions } from 'src/common/enums/Permissions.enum';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -72,11 +75,12 @@ export class AuthController {
 
     @Patch('/change-password')
     @HttpCode(204)
-    @UseGuards(JwtAuthGuard, UserStatusGuard)
+    @UseGuards(JwtAuthGuard, UserStatusGuard, PermissionsGuard)
+    @RequirePermissions([Permissions.UpdateMySelf])
     async changePassword(@Body() body: ChangePasswordDto, @Req() req: Request) {
         const userId: number = req['user']['userId'];
         const cacheKey = `change_password_attempts:${userId}`;
-        const user = await this.usersService.findOne(userId);
+        const user = await this.usersService.findById(userId);
         const failedAttempts = (await this.cacheManager.get<number>(cacheKey)) || 0;
         if (failedAttempts >= this.MAX_ATTEMPTS) {
             throw new UnauthorizedException(

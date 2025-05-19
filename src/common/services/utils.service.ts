@@ -1,16 +1,20 @@
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CustomError } from '../types/CustomError.type';
 import { PaginationInterface } from '../interfaces/pagination.interface';
+import { PropertySearch } from '../interfaces/property-search.interface';
+import { SearchOperators } from '../enums/SearchOperators.enum';
 
-export class UtilsService<T, T2> {
-    private repository: Repository<T>;
+export class UtilsService<Entity> {
+    private repo: Repository<Entity>;
     protected className: string;
-    constructor(repository: Repository<T>, className: string = '') {
-        this.repository = repository;
+
+    constructor(repository: Repository<Entity>, className: string = '') {
+        this.repo = repository;
         this.className = className;
     }
-    protected async updateEntity(id: number, dto: T2) {
+
+    protected async updateEntity<UpdateEntityDto>(id: number, dto: UpdateEntityDto) {
         const props: Record<string, any> = {};
         for (const key in Object.keys(dto)) {
             if (dto[key] !== undefined) {
@@ -19,10 +23,10 @@ export class UtilsService<T, T2> {
         }
 
         if (Object.keys(props).length === 0) {
-            throw new BadRequestException('No data to update');
+            throw new BadRequestException('Ningún dato informado para actualizar');
         }
 
-        await this.repository
+        await this.repo
             .createQueryBuilder()
             .update()
             .set(props)
@@ -30,8 +34,40 @@ export class UtilsService<T, T2> {
             .execute();
     }
 
-    protected page(pagination: PaginationInterface): number {
-        return pagination.limit * (pagination.page - 1);
+    protected setPagination(query: SelectQueryBuilder<Entity>, pagination: PaginationInterface) {
+        return query.take(pagination.limit).skip(pagination.limit * (pagination.page - 1));
+    }
+
+    protected setQueryFilter(
+        alias: string,
+        query: SelectQueryBuilder<Entity>,
+        { key, operator, value, valueEnd }: PropertySearch,
+    ) {
+        let sql = `${alias}.${key}`;
+
+        switch (operator) {
+            case SearchOperators.Between:
+                if (!valueEnd) {
+                    throw new BadRequestException(
+                        'Cuando seleccionado el operador "ENTRE" el valor final debe ser informado',
+                    );
+                }
+                sql = `${sql} >= :value and ${sql} <= :valueEnd`;
+                break;
+            case SearchOperators.Contain:
+                sql += ' ilike :value';
+                break;
+            default:
+                sql += ` ${operator} :value`;
+                break;
+        }
+
+        query = query.andWhere(sql, {
+            value: operator === SearchOperators.Contain ? `%${value}%` : value,
+            valueEnd,
+        });
+
+        return query;
     }
 
     protected handleError(func: string, error: any) {

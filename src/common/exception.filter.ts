@@ -26,7 +26,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
 
         const message =
-            exception instanceof HttpException ? exception.getResponse() : 'Internal server error';
+            exception instanceof HttpException
+                ? exception.getResponse()
+                : 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde';
 
         response.status(status).json({
             statusCode: status,

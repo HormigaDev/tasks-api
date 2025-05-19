@@ -4,12 +4,9 @@ import {
     ExecutionContext,
     ForbiddenException,
     UnauthorizedException,
-    InternalServerErrorException,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { UsersService } from 'src/modules/users/users.service';
-import { UserStatus } from '../enums/UserStatus.enum';
-import { RolesService } from 'src/modules/roles/roles.service';
+import { UserStatus } from 'src/database/model/entities/user-status.entity';
 
 @Injectable()
 export class UserStatusGuard implements CanActivate {
@@ -22,18 +19,16 @@ export class UserStatusGuard implements CanActivate {
             throw new UnauthorizedException('Usuario no informado.');
         }
 
-        const user = await this.usersService.findOne(userId);
-        switch (user.status) {
+        const user = await this.usersService.findById(userId);
+        switch (user.status.id) {
             case UserStatus.Active:
                 return true;
             case UserStatus.Inactive:
                 throw new ForbiddenException('Usuario inactivo.');
             case UserStatus.Blocked:
                 throw new ForbiddenException('Usuario bloqueado.');
-            case UserStatus.Deleted:
-                throw new ForbiddenException('Usuario no encontrado.');
             default:
-                throw new InternalServerErrorException('Estado de usuario desconocido.');
+                throw new ForbiddenException('Usuario no encontrado.');
         }
     }
 }

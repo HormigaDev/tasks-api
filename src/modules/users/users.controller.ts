@@ -7,6 +7,7 @@ import {
     Param,
     Patch,
     Post,
+    Put,
     Query,
     Req,
     UseGuards,
@@ -18,31 +19,35 @@ import { Permissions } from 'src/common/enums/Permissions.enum';
 import { IdPipe } from 'src/common/pipes/id.pipe';
 import { Request } from 'express';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
-import { PaginationPipe } from 'src/common/pipes/pagination.pipe';
-import { PaginationInterface } from 'src/common/interfaces/pagination.interface';
-import { CreateUserDto } from 'src/common/validators/create-user.dto';
-import { UpdateUserDto } from 'src/common/validators/update-user.dto';
+import { CreateUserDto } from 'src/modules/users/DTOs/create-user.dto';
+import { UpdateUserDto } from 'src/modules/users/DTOs/update-user.dto';
 import { UserStatusGuard } from 'src/common/guards/user-status.guard';
+import { UserFindFilters } from './DTOs/user-find-filters.dto';
+import { ContextService } from '../context/context.service';
+import { UserStatus } from 'src/database/model/entities/user-status.entity';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, UserStatusGuard, PermissionsGuard)
 export class UsersController {
-    constructor(private readonly service: UsersService) {}
+    constructor(
+        private readonly service: UsersService,
+        private readonly context: ContextService,
+    ) {}
 
     @Get('/')
     @HttpCode(200)
     @RequirePermissions([Permissions.ReadUsers])
-    async getUsers(@Query('pagination', PaginationPipe) pagination: PaginationInterface) {
-        const users = await this.service.findAll(pagination);
-        return { users };
+    async getUsers(@Query() filters: UserFindFilters) {
+        const [users, count] = await this.service.find(filters);
+        return { users, count };
     }
 
     @Get('/me')
     @HttpCode(200)
-    @RequirePermissions([])
+    @RequirePermissions([Permissions.ReadMySelf])
     async getInfo(@Req() req: Request) {
         const userId: number = req['user']['userId'];
-        const user = await this.service.findOne(userId, true);
+        const user = await this.service.findById(userId, true);
         delete user.password;
         return { user };
     }
@@ -51,7 +56,7 @@ export class UsersController {
     @HttpCode(200)
     @RequirePermissions([Permissions.ReadUsers])
     async getUserInfo(@Param('id', IdPipe) id: number) {
-        const user = await this.service.findOne(id, true);
+        const user = await this.service.findById(id, true);
         delete user.password;
         return { user };
     }
@@ -65,12 +70,40 @@ export class UsersController {
         return { user };
     }
 
-    @Patch('/')
+    @Put('/me')
     @HttpCode(204)
+    @RequirePermissions([Permissions.UpdateMySelf])
+    async inactiveUser() {
+        const status = new UserStatus();
+        status.id = UserStatus.Inactive;
+        const id = this.context.getUserId();
+
+        await this.service.setUserStatus(id, status);
+        return {};
+    }
+
+    @Patch('/me')
+    @HttpCode(200)
+    @RequirePermissions([Permissions.UpdateMySelf])
+    async updateMySelfUser(@Body() body: UpdateUserDto) {
+        delete body.roles;
+        await this.service.update(this.context.getUserId(), body);
+        return { message: 'Usuario actualizado con éxito' };
+    }
+
+    @Patch('/:id')
+    @HttpCode(200)
     @RequirePermissions([Permissions.UpdateUsers])
-    async updateUser(@Body() body: UpdateUserDto, @Req() req: Request) {
-        const userId: number = req['user']['userId'];
-        await this.service.update(userId, body);
+    async updateUser(@Body() body: UpdateUserDto, @Param('id', IdPipe) id: number) {
+        await this.service.update(id, body);
+        return { message: 'Usuario actualizado con éxito' };
+    }
+
+    @Delete('/me')
+    @HttpCode(204)
+    @RequirePermissions([Permissions.DeleteMySelf])
+    async deleteMySelf() {
+        await this.service.delete(this.context.getUserId());
         return {};
     }
 

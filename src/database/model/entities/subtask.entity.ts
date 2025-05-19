@@ -13,6 +13,7 @@ import { Priority } from './priority.entity';
 import { Tag } from './tag.entity';
 import { Milestone } from './milestone.entity';
 import { Attachment } from './attachment.entity';
+import { Comment } from './comment.entity';
 
 @Entity('subtasks')
 export class Subtask {

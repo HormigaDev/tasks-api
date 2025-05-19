@@ -1,7 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity('categories')
-export class Category {
+@Entity('task_status')
+export class TaskStatus {
+    static Pending: number = 1;
+    static Completed: number = 2;
+    static Cancelled: number = 3;
+
     @PrimaryGeneratedColumn()
     id: number;
 

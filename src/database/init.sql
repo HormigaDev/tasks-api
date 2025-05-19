@@ -33,33 +33,21 @@ create table if not exists user_roles (
     role_id integer not null,
     primary key (user_id, role_id),
     foreign key (user_id) references users (id),
-    foreign key (role_id) references roles (id)    
+    foreign key (role_id) references roles (id) on delete cascade    
 );
 
 create table if not exists categories (
     id serial primary key,
-    name varchar(100) unique not null
-);
-
-create table if not exists user_categories (
+    name varchar(100) unique not null,
     user_id integer not null,
-    category_id integer not null,
-    primary key(user_id, category_id),
-    foreign key (user_id) references users (id),
-    foreign key (category_id) references categories (id)
+    foreign key (user_id) references users (id)
 );
 
 create table if not exists tags (
     id serial primary key,
-    name varchar(100) unique not null
-);
-
-create table if not exists user_tags (
+    name varchar(100) unique not null,
     user_id integer not null,
-    tag_id integer not null,
-    primary key(user_id, tag_id),
-    foreign key (user_id) references users (id),
-    foreign key (tag_id) references tags (id)
+    foreign key (user_id) references users (id)
 );
 
 create table if not exists task_status (

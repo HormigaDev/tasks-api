@@ -25,5 +25,5 @@ export class UpdateUserDto {
     @ArrayNotEmpty({ message: 'El array de roles no puede estar vacío.' })
     @ArrayMinSize(1, { message: 'El array debe contener al menos el id de 1 rol' })
     @IsInt({ each: true, message: 'Cada elemento del array debe ser un número entero.' })
-    readonly roles?: number[];
+    roles?: number[];
 }

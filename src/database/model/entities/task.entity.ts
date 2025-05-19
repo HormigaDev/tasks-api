@@ -16,6 +16,7 @@ import { Tag } from './tag.entity';
 import { Milestone } from './milestone.entity';
 import { Subtask } from './subtask.entity';
 import { Attachment } from './attachment.entity';
+import { Comment } from './comment.entity';
 
 @Entity('tasks')
 export class Task {
