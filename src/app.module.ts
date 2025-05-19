@@ -9,6 +9,8 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { CacheProviderModule } from './modules/cache/cache.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { ContextModule } from './modules/context/context.module';
 
 dotenv.config();
 
@@ -23,12 +25,14 @@ dotenv.config();
             database: process.env.DB_NAME,
             synchronize: false,
             autoLoadEntities: true,
-            entities: [__dirname + '/common/models/*.entity{.ts,.js}'],
+            entities: [__dirname + '/database/model/entities/*.entity{.ts,.js}'],
         }),
         CacheProviderModule,
         UsersModule,
         AuthModule,
         RolesModule,
+        CategoriesModule,
+        ContextModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],

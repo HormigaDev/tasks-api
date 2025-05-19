@@ -1,6 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, AfterLoad } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToMany,
+    JoinTable,
+    AfterLoad,
+    ManyToOne,
+} from 'typeorm';
 import { Role } from './role.entity';
-import { UserStatus } from 'src/common/enums/UserStatus.enum';
+import { UserStatus } from './user-status.entity';
 
 @Entity('users')
 export class User {
@@ -16,7 +24,7 @@ export class User {
     @Column({ type: 'varchar', length: 255, nullable: false })
     password: string;
 
-    @Column({ name: 'status_id', type: 'integer', nullable: false, default: UserStatus.Active })
+    @ManyToOne(() => UserStatus, { nullable: false, eager: true })
     status: UserStatus;
 
     @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -25,7 +33,7 @@ export class User {
     @Column({ name: 'last_update', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     lastUpdate: Date;
 
-    @ManyToMany(() => Role, (role) => role.users)
+    @ManyToMany(() => Role, (role) => role.users, { onDelete: 'CASCADE' })
     @JoinTable({
         name: 'user_roles',
         joinColumn: {

@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Role } from 'src/database/entities/role.entity';
+import { Role } from 'src/database/model/entities/role.entity';
 import { RolesController } from './roles.controller';
 
 @Global()

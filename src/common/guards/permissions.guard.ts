@@ -1,16 +1,14 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UsersService } from 'src/modules/users/users.service';
-import { UserStatus } from '../enums/UserStatus.enum';
-import { RolesService } from 'src/modules/roles/roles.service';
 import { Permissions } from '../enums/Permissions.enum';
+import { UserStatus } from 'src/database/model/entities/user-status.entity';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
         private readonly usersService: UsersService,
-        private readonly rolesService: RolesService,
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -29,8 +27,8 @@ export class PermissionsGuard implements CanActivate {
             throw new ForbiddenException('Usuario no encontrado.');
         }
 
-        const user = await this.usersService.findOne(userId, true);
-        if (user.status !== UserStatus.Active) {
+        const user = await this.usersService.findById(userId, true);
+        if (user.status.id !== UserStatus.Active) {
             throw new ForbiddenException('Usuario no activo.');
         }
 

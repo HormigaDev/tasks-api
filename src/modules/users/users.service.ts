@@ -6,37 +6,40 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationInterface } from 'src/common/interfaces/pagination.interface';
-import { ServiceInterface } from 'src/common/interfaces/service.interface';
-import { User } from 'src/database/entities/user.entity';
-import { Role } from 'src/database/entities/role.entity';
+import { User } from 'src/database/model/entities/user.entity';
+import { Role } from 'src/database/model/entities/role.entity';
 import { UtilsService } from 'src/common/services/utils.service';
-import { CreateUserDto } from 'src/common/validators/create-user.dto';
-import { UpdateUserDto } from 'src/common/validators/update-user.dto';
+import { CreateUserDto } from 'src/modules/users/DTOs/create-user.dto';
+import { UpdateUserDto } from 'src/modules/users/DTOs/update-user.dto';
 import { In, Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
 import { Permissions } from 'src/common/enums/Permissions.enum';
-import { UserStatus } from 'src/common/enums/UserStatus.enum';
+import { UserStatus } from 'src/database/model/entities/user-status.entity';
+import { FindResult } from 'src/common/interfaces/find-result.interface';
+import { UserFindFilters } from './DTOs/user-find-filters.dto';
+import { SearchOperators } from 'src/common/enums/SearchOperators.enum';
 
 @Injectable()
-export class UsersService
-    extends UtilsService<User, UpdateUserDto>
-    implements ServiceInterface<User, CreateUserDto, UpdateUserDto>
-{
+export class UsersService extends UtilsService<User> {
     constructor(
         @InjectRepository(User)
-        private readonly usersRepository: Repository<User>,
+        private readonly repository: Repository<User>,
         private readonly authService: AuthService,
     ) {
-        super(usersRepository, 'UsersService');
+        super(repository, 'UsersService');
     }
 
-    async findAll(pagination: PaginationInterface): Promise<User[]> {
+    async find(filters: UserFindFilters): Promise<FindResult<User>> {
         try {
-            if (pagination.page < 1 || pagination.limit < 1) {
-                throw new BadRequestException('Invalid pagination');
+            const status = [UserStatus.Active];
+            if (filters.includeInactives) {
+                status.push(UserStatus.Inactive);
             }
-            const users = await this.usersRepository
+            if (filters.includeBlockeds) {
+                status.push(UserStatus.Blocked);
+            }
+
+            let query = this.repository
                 .createQueryBuilder('user')
                 .select([
                     'user.id',
@@ -47,22 +50,31 @@ export class UsersService
                     'user.lastUpdate',
                 ])
                 .leftJoinAndSelect('user.roles', 'role')
-                .skip(this.page(pagination))
-                .take(pagination.limit)
-                .where('status = :status', { status: UserStatus.Active })
-                .getMany();
+                .where('user.status.id in (:...status)', { status });
 
-            return users;
-        } catch (error) {
-            this.handleError('findAll', error);
+            query = this.setPagination(query, filters.pagination).orderBy(
+                `user.${filters.orderBy}`,
+                filters.order,
+            );
+
+            if (filters.query) {
+                query = this.setQueryFilter('user', query, filters.query);
+            }
+
+            return await query.getManyAndCount();
+        } catch (err) {
+            this.handleError('find', err);
         }
     }
 
-    async findOne(id: number, includeRoles: boolean = false): Promise<User> {
+    async findById(id: number, includeRoles: boolean = false): Promise<User> {
         try {
-            let query = this.usersRepository
+            let query = this.repository
                 .createQueryBuilder('user')
-                .where('user.id = :id', { id });
+                .where('user.id = :id', { id })
+                .andWhere('user.status.id in (:...status)', {
+                    status: [UserStatus.Active, UserStatus.Inactive, UserStatus.Blocked],
+                });
 
             if (includeRoles) {
                 query = query.leftJoinAndSelect('user.roles', 'role');
@@ -70,7 +82,7 @@ export class UsersService
 
             const user = await query.getOne();
             if (!user) {
-                throw new NotFoundException('Usuario no encontrado.');
+                throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
             }
             if (includeRoles) {
                 const isAdmin = user.roles.some((role) => {
@@ -80,13 +92,13 @@ export class UsersService
             }
             return user;
         } catch (error) {
-            this.handleError('findOne', error);
+            this.handleError('findById', error);
         }
     }
 
     async findOneByEmail(email: string): Promise<User> {
         try {
-            const user = await this.usersRepository.findOneBy({ email });
+            const user = await this.repository.findOneBy({ email });
             await this.validateStatus(user.id);
             return user;
         } catch (error) {
@@ -107,46 +119,41 @@ export class UsersService
 
     async create(dto: CreateUserDto): Promise<User> {
         try {
-            const queryRunner = this.usersRepository.manager.connection.createQueryRunner();
-
-            await queryRunner.startTransaction();
-            try {
+            return await this.repository.manager.transaction(async (manager) => {
                 await this.existsUserByEmail(dto.email);
                 const user = new User();
-                user.email = dto.email;
-                user.password = await this.authService.hashPassword(dto.password);
-                user.name = dto.name;
 
-                const savedUser = await queryRunner.manager.save(User, user);
-                const roles = await queryRunner.manager.find(Role, {
+                user.email = dto.email;
+                user.name = dto.name;
+                user.password = await this.authService.hashPassword(dto.password);
+
+                const status = new UserStatus();
+                status.id = UserStatus.Active;
+                user.status = status;
+
+                const savedUser = await manager.save(User, user);
+                const roles = await manager.find(Role, {
                     where: { id: In(dto.roles) },
                 });
 
                 if (roles.length !== dto.roles.length) {
-                    throw new BadRequestException('Uno o más roles no existen.');
+                    throw new BadRequestException('Uno o más roles no existen');
                 }
 
                 savedUser.roles = roles;
-                await queryRunner.manager.save(User, savedUser);
-                await queryRunner.commitTransaction();
-                return savedUser;
-            } catch (err) {
-                await queryRunner.rollbackTransaction();
-                throw err;
-            } finally {
-                await queryRunner.release();
-            }
-        } catch (error) {
-            this.handleError('create', error);
+                return await manager.save(savedUser);
+            });
+        } catch (err) {
+            this.handleError('create', err);
         }
     }
 
     async update(id: number, dto: UpdateUserDto): Promise<User> {
         try {
             await this.validateStatus(id);
-            await this.findOne(id);
+            await this.findById(id);
             await this.updateEntity(id, dto);
-            return await this.findOne(id);
+            return await this.findById(id);
         } catch (error) {
             this.handleError('update', error);
         }
@@ -154,40 +161,18 @@ export class UsersService
 
     async delete(id: number): Promise<User> {
         try {
-            return await this.setUserStatus(id, UserStatus.Deleted);
+            const status = new UserStatus();
+            status.id = UserStatus.Deleted;
+            return await this.setUserStatus(id, status);
         } catch (error) {
             this.handleError('delete', error);
-        }
-    }
-
-    async banUser(id: number): Promise<User> {
-        try {
-            return await this.setUserStatus(id, UserStatus.Blocked);
-        } catch (error) {
-            this.handleError('banUser', error);
-        }
-    }
-
-    async inactiveUser(id: number): Promise<User> {
-        try {
-            return await this.setUserStatus(id, UserStatus.Inactive);
-        } catch (error) {
-            this.handleError('inactiveUser', error);
-        }
-    }
-
-    async activeUser(id: number): Promise<User> {
-        try {
-            return await this.setUserStatus(id, UserStatus.Active);
-        } catch (error) {
-            this.handleError('activeUser', error);
         }
     }
 
     async setUserPassword(id: number, password: string): Promise<void> {
         try {
             await this.validateStatus(id);
-            await this.usersRepository
+            await this.repository
                 .createQueryBuilder()
                 .update()
                 .set({ password: await this.authService.hashPassword(password) })
@@ -198,10 +183,9 @@ export class UsersService
         }
     }
 
-    private async setUserStatus(id: number, status: UserStatus) {
-        await this.validateStatus(id);
-        const user = await this.findOne(id);
-        await this.usersRepository
+    async setUserStatus(id: number, status: UserStatus) {
+        const user = await this.validateStatus(id);
+        await this.repository
             .createQueryBuilder()
             .update()
             .set({ status })
@@ -213,14 +197,16 @@ export class UsersService
     }
 
     private async validateStatus(id: number) {
-        const user = await this.findOne(id);
-        switch (user.status) {
+        const user = await this.findById(id);
+        switch (user.status.id) {
+            case UserStatus.Active:
+                return user;
             case UserStatus.Inactive:
-                throw new ForbiddenException('Usuario inactivo.');
+                throw new ForbiddenException('Usuario inactivo');
             case UserStatus.Blocked:
-                throw new ForbiddenException('Usuario bloqueado.');
+                throw new ForbiddenException('Usuario bloqueado');
             case UserStatus.Deleted:
-                throw new ForbiddenException('Usuario no encontrado.');
+                throw new ForbiddenException('Usuario no encontrado');
             default:
                 throw new InternalServerErrorException('Estado de usuario desconocido.');
         }

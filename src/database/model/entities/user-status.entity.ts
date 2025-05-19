@@ -1,7 +1,12 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity('priorities')
-export class Priority {
+@Entity('user_status')
+export class UserStatus {
+    static Active: number = 1;
+    static Inactive: number = 2;
+    static Blocked: number = 3;
+    static Deleted: number = 4;
+
     @PrimaryGeneratedColumn()
     id: number;
 
