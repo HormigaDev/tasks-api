@@ -11,6 +11,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { CacheProviderModule } from './modules/cache/cache.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ContextModule } from './modules/context/context.module';
+import { TagsModule } from './modules/tags/tags.module';
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ dotenv.config();
         RolesModule,
         CategoriesModule,
         ContextModule,
+        TagsModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],

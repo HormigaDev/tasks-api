@@ -17,7 +17,6 @@ import { Permissions } from 'src/common/enums/Permissions.enum';
 import { UserStatus } from 'src/database/model/entities/user-status.entity';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UserFindFilters } from './DTOs/user-find-filters.dto';
-import { SearchOperators } from 'src/common/enums/SearchOperators.enum';
 
 @Injectable()
 export class UsersService extends UtilsService<User> {
@@ -159,7 +158,7 @@ export class UsersService extends UtilsService<User> {
     async updateUserRoles(id: number, roles: number[]): Promise<User> {
         try {
             await this.validateStatus(id);
-            const user = await this.findById(id);
+            await this.findById(id);
             const newRoles = await this.repository.manager.find(Role, {
                 where: { id: In(roles) },
             });
