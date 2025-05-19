@@ -38,14 +38,17 @@ create table if not exists user_roles (
 
 create table if not exists categories (
     id serial primary key,
-    name varchar(100) unique not null,
+    name varchar(100) not null,
+    icon varchar(50) not null,
+    color varchar(7) not null default '#000000',
     user_id integer not null,
     foreign key (user_id) references users (id)
 );
 
 create table if not exists tags (
     id serial primary key,
-    name varchar(100) unique not null,
+    name varchar(100) not null,
+    color varchar(7) not null default '#000000',
     user_id integer not null,
     foreign key (user_id) references users (id)
 );

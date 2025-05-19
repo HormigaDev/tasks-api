@@ -6,7 +6,6 @@ import { UtilsService } from 'src/common/services/utils.service';
 import { CreateCategoryDto } from './DTOs/create-category.dto';
 import { ContextService } from '../context/context.service';
 import { UpdateCategoryDto } from './DTOs/update-category.dto';
-import { User } from 'src/database/model/entities/user.entity';
 import { CategoryFindFiltersDto } from './DTOs/category-find-filters.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 
@@ -14,9 +13,9 @@ import { FindResult } from 'src/common/interfaces/find-result.interface';
 export class CategoriesService extends UtilsService<Category> {
     constructor(
         @InjectRepository(Category) private readonly repository: Repository<Category>,
-        private context: ContextService,
+        private _context: ContextService,
     ) {
-        super(repository, 'CategoriesService', context);
+        super(repository, 'CategoriesService', _context);
     }
 
     async create(dto: CreateCategoryDto): Promise<Category> {
@@ -27,6 +26,8 @@ export class CategoriesService extends UtilsService<Category> {
 
             const category = new Category();
             category.name = dto.name;
+            category.icon = dto.icon || null;
+            category.color = dto.color;
             category.user = this.user;
 
             return await this.repository.save(category);
