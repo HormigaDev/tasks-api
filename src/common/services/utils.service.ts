@@ -1,5 +1,5 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-import { In, Repository, SelectQueryBuilder } from 'typeorm';
+import { BadRequestException, HttpException } from '@nestjs/common';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CustomError } from '../types/CustomError.type';
 import { PaginationInterface } from '../interfaces/pagination.interface';
 import { PropertySearch } from '../interfaces/property-search.interface';
@@ -7,7 +7,6 @@ import { SearchOperators } from '../enums/SearchOperators.enum';
 import { User } from 'src/database/model/entities/user.entity';
 import { ContextService } from 'src/modules/context/context.service';
 
-@Injectable()
 export class UtilsService<Entity> {
     private repo: Repository<Entity>;
     protected className: string;
