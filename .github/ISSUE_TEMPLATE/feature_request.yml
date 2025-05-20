@@ -1,0 +1,45 @@
+name: ✨ Feature Request
+description: Sugerir o planificar una nueva funcionalidad
+title: '[FEATURE] - '
+labels: [feature]
+assignees:
+    - HormigaDev
+body:
+    - type: textarea
+      id: feature-description
+      attributes:
+          label: ✨ Descripción de la Funcionalidad
+      validations:
+          required: true
+
+    - type: textarea
+      id: motivation
+      attributes:
+          label: 🧠 Motivación
+          description: ¿Por qué se necesita esta funcionalidad?
+      validations:
+          required: true
+
+    - type: textarea
+      id: proposal
+      attributes:
+          label: 💡 Propuesta Técnica
+          description: Expón cómo se implementaría.
+      validations:
+          required: true
+
+    - type: checkboxes
+      id: criteria
+      attributes:
+          label: 📌 Criterios de Aceptación
+          options:
+              - label: Implementación validada en staging
+              - label: Documentación incluida
+
+    - type: textarea
+      id: dependencies
+      attributes:
+          label: 🔗 Dependencias
+          description: Otras tareas o módulos relacionados.
+      validations:
+          required: false

@@ -1,0 +1,36 @@
+name: 🐛 Reporte de Bug
+description: Reportar un error en el proyecto
+title: '[BUG] - '
+labels: [bug]
+assignees:
+    - HormigaDev
+body:
+    - type: textarea
+      id: bug-description
+      attributes:
+          label: 🐛 Descripción del BUG
+          description: Describe claramente el error encontrado.
+          placeholder: Ej. Al hacer clic en X, ocurre Y inesperado...
+      validations:
+          required: true
+
+    - type: textarea
+      id: steps-to-reproduce
+      attributes:
+          label: 📌 Pasos para Reproducir
+          description: Proporciona una lista detallada de cómo reproducir el error.
+          placeholder: |
+              1. Ir a la página X
+              2. Hacer clic en el botón Y
+              3. Ver el error Z
+      validations:
+          required: true
+
+    - type: textarea
+      id: expected-behavior
+      attributes:
+          label: ⚡ Comportamiento Esperado
+          description: Explica qué debería haber ocurrido.
+          placeholder: El sistema debería haber...
+      validations:
+          required: true

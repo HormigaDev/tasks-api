@@ -1,0 +1,44 @@
+name: 📝 Actualización de Documentación
+description: Crear o actualizar documentación del proyecto
+title: '[DOCS] - '
+labels: [documentation]
+assignees:
+    - HormigaDev
+body:
+    - type: textarea
+      id: doc-section
+      attributes:
+          label: 📘 Sección a Documentar
+          description: ¿Qué parte del proyecto se está documentando?
+      validations:
+          required: true
+
+    - type: textarea
+      id: content
+      attributes:
+          label: ✍️ Contenido a Incluir
+          description: Explica los puntos clave que se deben documentar.
+      validations:
+          required: true
+
+    - type: textarea
+      id: purpose
+      attributes:
+          label: 🎯 Propósito
+          description: ¿Qué problema resuelve esta documentación?
+      validations:
+          required: true
+
+    - type: input
+      id: related-code
+      attributes:
+          label: 📌 Relación con Código
+          placeholder: Ej. src/modules/auth.ts, commit abc123
+
+    - type: checkboxes
+      id: done
+      attributes:
+          label: ✅ Criterios de Finalización
+          options:
+              - label: Documentación clara y precisa
+              - label: Enlace directo desde el README o sección correspondiente

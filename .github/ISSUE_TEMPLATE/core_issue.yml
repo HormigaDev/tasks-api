@@ -1,0 +1,46 @@
+name: ⚙️ Core Issue
+description: Reportar o discutir cambios clave en la arquitectura o lógica central
+title: '[CORE] - '
+labels: [core]
+assignees:
+    - HormigaDev
+body:
+    - type: textarea
+      id: core-description
+      attributes:
+          label: ⚙️ Descripción del Problema
+          description: Explica el cambio o problema central.
+      validations:
+          required: true
+
+    - type: textarea
+      id: context
+      attributes:
+          label: 🧩 Contexto del Sistema
+          description: Describe el contexto actual del sistema relacionado con este problema.
+      validations:
+          required: true
+
+    - type: textarea
+      id: impact
+      attributes:
+          label: 📌 Impacto Esperado
+          description: ¿Qué impacto tendría este cambio en el sistema?
+      validations:
+          required: true
+
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: 🔍 Alternativas Consideradas
+          description: Enumera las posibles soluciones o enfoques considerados.
+      validations:
+          required: false
+
+    - type: checkboxes
+      id: related-tasks
+      attributes:
+          label: 🚧 Tareas Relacionadas
+          options:
+              - label: Task 1
+              - label: Task 2

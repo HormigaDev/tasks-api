@@ -1,0 +1,46 @@
+name: 🚨 Essential Task
+description: Tarea crítica para mantener la funcionalidad base del proyecto
+title: '[ESSENTIAL] - '
+labels: [essential]
+assignees:
+    - HormigaDev
+body:
+    - type: textarea
+      id: task-description
+      attributes:
+          label: 🔧 Descripción de la Tarea
+      validations:
+          required: true
+
+    - type: textarea
+      id: goal
+      attributes:
+          label: 🎯 Objetivo
+      validations:
+          required: true
+
+    - type: dropdown
+      id: priority
+      attributes:
+          label: 📌 Prioridad
+          options:
+              - Crítica
+              - Alta
+              - Media
+              - Baja
+      validations:
+          required: true
+
+    - type: checkboxes
+      id: acceptance-criteria
+      attributes:
+          label: 📝 Criterios de Aceptación
+          options:
+              - label: Todos los endpoints deben responder correctamente
+              - label: La tarea debe estar cubierta por tests
+
+    - type: input
+      id: eta
+      attributes:
+          label: ⏱ ETA Estimada
+          placeholder: Ej. 3 días
