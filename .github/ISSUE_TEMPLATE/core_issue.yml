@@ -1,7 +1,7 @@
 name: ⚙️ Core Issue
 description: Reportar o discutir cambios clave en la arquitectura o lógica central
 title: '[CORE] - '
-labels: [core]
+labels: [enhancement]
 assignees:
     - HormigaDev
 body:
@@ -37,10 +37,8 @@ body:
       validations:
           required: false
 
-    - type: checkboxes
+    - type: textarea
       id: related-tasks
       attributes:
           label: 🚧 Tareas Relacionadas
-          options:
-              - label: Task 1
-              - label: Task 2
+          description: Lista libre de tareas o issues relacionados.

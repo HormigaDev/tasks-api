@@ -34,11 +34,3 @@ body:
       attributes:
           label: 📌 Relación con Código
           placeholder: Ej. src/modules/auth.ts, commit abc123
-
-    - type: checkboxes
-      id: done
-      attributes:
-          label: ✅ Criterios de Finalización
-          options:
-              - label: Documentación clara y precisa
-              - label: Enlace directo desde el README o sección correspondiente

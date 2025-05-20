@@ -1,7 +1,7 @@
 name: 🚨 Essential Task
 description: Tarea crítica para mantener la funcionalidad base del proyecto
 title: '[ESSENTIAL] - '
-labels: [essential]
+labels: [enhancement]
 assignees:
     - HormigaDev
 body:
@@ -36,8 +36,11 @@ body:
       attributes:
           label: 📝 Criterios de Aceptación
           options:
-              - label: Todos los endpoints deben responder correctamente
-              - label: La tarea debe estar cubierta por tests
+              - label: Todos los endpoints o funcionalidades relacionadas funcionan correctamente
+              - label: Código documentado conforme al estándar del proyecto
+              - label: Cumple con las normas de estilo y linters
+              - label: No introduce regresiones
+              - label: Cumple con requisitos de performance mínimos
 
     - type: input
       id: eta
