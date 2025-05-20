@@ -75,7 +75,7 @@ export class UsersController {
     @HttpCode(204)
     @RequirePermissions([Permissions.UpdateMySelf])
     async inactiveUser() {
-        await this.service.setUserStatus(this.context.userId, UserStatus.inactive);
+        await this.service.setUserStatus(this.context.user.id, UserStatus.inactive);
         return {};
     }
 
@@ -84,7 +84,7 @@ export class UsersController {
     @RequirePermissions([Permissions.UpdateMySelf])
     async updateMySelfUser(@Body() body: UpdateUserDto) {
         delete body.roles;
-        await this.service.update(this.context.userId, body);
+        await this.service.update(this.context.user.id, body);
         return { message: 'Usuario actualizado con éxito' };
     }
 
@@ -108,7 +108,7 @@ export class UsersController {
     @HttpCode(204)
     @RequirePermissions([Permissions.DeleteMySelf])
     async deleteMySelf() {
-        await this.service.delete(this.context.userId);
+        await this.service.delete(this.context.user.id);
         return {};
     }
 

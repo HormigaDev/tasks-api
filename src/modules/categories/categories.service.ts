@@ -13,9 +13,9 @@ import { FindResult } from 'src/common/interfaces/find-result.interface';
 export class CategoriesService extends UtilsService<Category> {
     constructor(
         @InjectRepository(Category) private readonly repository: Repository<Category>,
-        private _context: ContextService,
+        private context: ContextService,
     ) {
-        super(repository, 'CategoriesService', _context);
+        super(repository, 'CategoriesService');
     }
 
     async create(dto: CreateCategoryDto): Promise<Category> {
@@ -28,7 +28,7 @@ export class CategoriesService extends UtilsService<Category> {
             category.name = dto.name;
             category.icon = dto.icon || null;
             category.color = dto.color;
-            category.user = this.user;
+            category.user = this.context.user;
 
             return await this.repository.save(category);
         } catch (err) {
@@ -53,7 +53,7 @@ export class CategoriesService extends UtilsService<Category> {
     }
 
     async findById(id: number) {
-        const category = await this.repository.findOneBy({ id, user: this.user });
+        const category = await this.repository.findOneBy({ id, user: this.context.user });
         if (!category) {
             throw new NotFoundException(`Categoría con ID "${id}" no encontrada`);
         }
@@ -81,7 +81,7 @@ export class CategoriesService extends UtilsService<Category> {
     }
 
     async findByName(name: string) {
-        const category = await this.repository.findOneBy({ name, user: this.user });
+        const category = await this.repository.findOneBy({ name, user: this.context.user });
         return category;
     }
 }
