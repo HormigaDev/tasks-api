@@ -19,18 +19,6 @@ body:
       validations:
           required: true
 
-    - type: dropdown
-      id: priority
-      attributes:
-          label: 📌 Prioridad
-          options:
-              - Crítica
-              - Alta
-              - Media
-              - Baja
-      validations:
-          required: true
-
     - type: checkboxes
       id: acceptance-criteria
       attributes:
@@ -41,9 +29,3 @@ body:
               - label: Cumple con las normas de estilo y linters
               - label: No introduce regresiones
               - label: Cumple con requisitos de performance mínimos
-
-    - type: input
-      id: eta
-      attributes:
-          label: ⏱ ETA Estimada
-          placeholder: Ej. 3 días
