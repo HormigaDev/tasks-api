@@ -12,6 +12,7 @@ import { CacheProviderModule } from './modules/cache/cache.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ContextModule } from './modules/context/context.module';
 import { TagsModule } from './modules/tags/tags.module';
+import { MilestonesModule } from './modules/milestones/milestones.module';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ dotenv.config();
         CategoriesModule,
         ContextModule,
         TagsModule,
+        MilestonesModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],
