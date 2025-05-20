@@ -10,16 +10,10 @@ import { ContextService } from 'src/modules/context/context.service';
 export class UtilsService<Entity> {
     private repo: Repository<Entity>;
     protected className: string;
-    private ctx: ContextService;
 
-    constructor(
-        repository: Repository<Entity>,
-        className: string = '',
-        context: ContextService = null,
-    ) {
+    constructor(repository: Repository<Entity>, className: string = '') {
         this.repo = repository;
         this.className = className;
-        this.ctx = context;
     }
 
     protected async updateEntity<UpdateEntityDto>(id: number, dto: UpdateEntityDto) {
@@ -76,18 +70,6 @@ export class UtilsService<Entity> {
         });
 
         return query;
-    }
-
-    protected get user(): User {
-        if (!this.ctx) {
-            throw new CustomError({
-                functionOrMethod: `${this.className}/getUser (dentro de la clase UtilsService)`,
-                error: 'El contexto no está disponible',
-            });
-        }
-        const user = new User();
-        user.id = this.ctx.userId;
-        return user;
     }
 
     protected handleError(func: string, error: any) {

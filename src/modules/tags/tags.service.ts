@@ -16,7 +16,7 @@ export class TagsService extends UtilsService<Tag> {
         private readonly repository: Repository<Tag>,
         private readonly context: ContextService,
     ) {
-        super(repository, 'TagsService', context);
+        super(repository, 'TagsService');
     }
 
     async create(dto: CreateTagDto): Promise<Tag> {
@@ -26,7 +26,7 @@ export class TagsService extends UtilsService<Tag> {
             }
             const tag = new Tag();
             tag.name = dto.name;
-            tag.user = this.user;
+            tag.user = this.context.user;
             tag.color = dto.color;
 
             return await this.repository.save(tag);
@@ -37,7 +37,7 @@ export class TagsService extends UtilsService<Tag> {
 
     async findByName(name: string): Promise<Tag | null> {
         try {
-            const tag = await this.repository.findOneBy({ name, user: this.user });
+            const tag = await this.repository.findOneBy({ name, user: this.context.user });
             return tag;
         } catch (err) {
             this.handleError('findByName', err);
@@ -46,7 +46,7 @@ export class TagsService extends UtilsService<Tag> {
 
     async findById(id: number): Promise<Tag> {
         try {
-            const tag = await this.repository.findOneBy({ id, user: this.user });
+            const tag = await this.repository.findOneBy({ id, user: this.context.user });
             if (!tag) {
                 throw new NotFoundException(`No se encontró la etiqueta con el id "${id}"`);
             }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
+import { User } from 'src/database/model/entities/user.entity';
 
 @Injectable()
 export class ContextService {
@@ -21,11 +22,7 @@ export class ContextService {
         return this.storage.getStore()?.get(key);
     }
 
-    getUserId(): number {
-        return this.storage.getStore()?.get('userId');
-    }
-
-    get userId(): number {
-        return this.storage.getStore()?.get('userId');
+    get user(): User {
+        return this.storage.getStore()?.get('userEntity') as User;
     }
 }
