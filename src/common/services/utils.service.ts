@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 import { CustomError } from '../types/CustomError.type';
 import { PaginationInterface } from '../interfaces/pagination.interface';
 import { PropertySearch } from '../interfaces/property-search.interface';
@@ -16,7 +16,11 @@ export class UtilsService<Entity> {
         this.className = className;
     }
 
-    protected async updateEntity<UpdateEntityDto>(id: number, dto: UpdateEntityDto) {
+    protected async updateEntity<UpdateEntityDto>(
+        id: number,
+        dto: UpdateEntityDto,
+        repository: Repository<Entity> = null,
+    ) {
         const props: Record<string, any> = {};
         for (const key in Object.keys(dto)) {
             if (dto[key] !== undefined) {
@@ -28,12 +32,9 @@ export class UtilsService<Entity> {
             throw new BadRequestException('Ningún dato informado para actualizar');
         }
 
-        await this.repo
-            .createQueryBuilder()
-            .update()
-            .set(props)
-            .where('id = :id', { id })
-            .execute();
+        const repo = repository || this.repo;
+
+        await repo.createQueryBuilder().update().set(props).where('id = :id', { id }).execute();
     }
 
     protected setPagination(query: SelectQueryBuilder<Entity>, pagination: PaginationInterface) {
