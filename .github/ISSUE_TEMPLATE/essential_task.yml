@@ -1,6 +1,6 @@
 name: 🚨 Essential Task
 description: Tarea crítica para mantener la funcionalidad base del proyecto
-title: '[ESSENTIAL] - '
+title: '[ESSENTIAL] -'
 labels: [enhancement]
 assignees:
     - HormigaDev

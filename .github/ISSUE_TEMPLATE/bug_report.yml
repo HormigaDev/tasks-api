@@ -1,6 +1,6 @@
 name: 🐛 Reporte de Bug
 description: Reportar un error en el proyecto
-title: '[BUG] - '
+title: '[BUG] -'
 labels: [bug]
 assignees:
     - HormigaDev

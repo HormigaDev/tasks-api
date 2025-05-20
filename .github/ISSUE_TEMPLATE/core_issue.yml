@@ -1,6 +1,6 @@
 name: ⚙️ Core Issue
 description: Reportar o discutir cambios clave en la arquitectura o lógica central
-title: '[CORE] - '
+title: '[CORE] -'
 labels: [enhancement]
 assignees:
     - HormigaDev
