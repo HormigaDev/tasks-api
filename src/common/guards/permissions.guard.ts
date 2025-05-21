@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { UsersService } from 'src/modules/users/users.service';
 import { Permissions } from '../enums/Permissions.enum';
 import { UserStatus } from 'src/database/model/entities/user-status.entity';
+import { PERMISSION_KEY } from '../decorators/require-permissions.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -15,7 +16,7 @@ export class PermissionsGuard implements CanActivate {
         const { permissions, optional } = this.reflector.get<{
             permissions: number[];
             optional: boolean;
-        }>('permissions', context.getHandler()) || { permissions: [], optional: false };
+        }>(PERMISSION_KEY, context.getHandler()) || { permissions: [], optional: false };
         if (!permissions) {
             return true;
         }

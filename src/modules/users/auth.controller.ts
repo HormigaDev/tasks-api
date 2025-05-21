@@ -21,6 +21,7 @@ import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 import { RequirePermissions } from 'src/common/decorators/require-permissions.decorator';
 import { Permissions } from 'src/common/enums/Permissions.enum';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { Times } from 'src/common/Times';
 
 @Controller('auth')
 export class AuthController {
@@ -60,7 +61,7 @@ export class AuthController {
                 res.cookie('auth_token', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
-                    maxAge: 3600000,
+                    maxAge: Times.years(1),
                     sameSite: 'none',
                 });
                 return res.status(200).send({ message: 'Authentication successful' });
