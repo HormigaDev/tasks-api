@@ -15,7 +15,7 @@ export function ValidatedMessage(dtoClass: any) {
             const messages = errors
                 .map((err) => Object.values(err.constraints || {}).join(', '))
                 .join('; ');
-            throw new WsException(`Falló de validación: ${messages}`);
+            throw new WsException(`Fallo de validación: ${messages}`);
         }
         return object;
     })();

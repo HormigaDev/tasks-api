@@ -90,16 +90,12 @@ export class CommentsService extends UtilsService<Comment> {
                 const commentRepo = manager.getRepository(Comment);
 
                 const comment = await commentRepo.findOne({
-                    where: { id: dto.id },
+                    where: { id: dto.id, user: dto.user },
                     relations: ['user'],
                 });
 
                 if (!comment) {
                     throw new WsException(`Comentario con ID "${dto.id}" no encontrado`);
-                }
-
-                if (!dto.user || comment.user.id !== dto.user.id) {
-                    throw new WsException('No autorizado para editar este comentario');
                 }
 
                 comment.content = dto.content;

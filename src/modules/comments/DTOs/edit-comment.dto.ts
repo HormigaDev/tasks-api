@@ -9,7 +9,7 @@ export class EditCommentDto {
     @IsNumber({}, { message: 'El ID del comentario debe ser un número válido' })
     @IsNotNaN({ message: 'El ID del comentario debe ser un número válido' })
     @Min(1, { message: 'El ID del comentario debe ser mayor que 0' })
-    id: number;
+    readonly id: number;
 
     @IsNotEmpty({ message: 'El contenido del mensaje es obligatorio' })
     @IsString({ message: 'El contenido del mensaje debe ser un texto válido' })
