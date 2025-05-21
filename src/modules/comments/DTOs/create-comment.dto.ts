@@ -14,14 +14,14 @@ export class CreateCommentDto {
     @IsNumber({}, { message: 'El ID de la tarea debe ser un número válido' })
     @IsNotNaN({ message: 'El ID de la tarea debe ser un número válido' })
     @Min(1, { message: 'El ID de la tarea debe ser mayor que 0' })
-    taskId: number;
+    readonly taskId: number;
 
     @IsOptional()
     @Transform(({ value }) => Number(value))
     @IsNumber({}, { message: 'El ID de la subtarea debe ser un número válido' })
     @IsNotNaN({ message: 'El ID de la subtarea debe ser un número válido' })
     @Min(1, { message: 'El ID de la subtarea debe ser mayor que 0' })
-    subtaskId?: number;
+    readonly subtaskId?: number;
 
     @IsOptional()
     user?: User;
