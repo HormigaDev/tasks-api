@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Role } from './role.entity';
 import { UserStatus } from './user-status.entity';
+import { Permissions } from 'src/common/enums/Permissions.enum';
 
 @Entity('users')
 export class User {
@@ -58,5 +59,9 @@ export class User {
         });
 
         this.permissions = combinedPermissions;
+    }
+    hasPermission(permission: Permissions) {
+        if (!this.permissions) return false;
+        return (this.permissions & permission) === permission;
     }
 }

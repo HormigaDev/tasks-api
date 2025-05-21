@@ -13,6 +13,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { ContextModule } from './modules/context/context.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { MilestonesModule } from './modules/milestones/milestones.module';
+import { SocketModule } from './modules/websocket/socket.module';
+import { CommentsModule } from './modules/comments/comments.module';
 
 dotenv.config();
 
@@ -37,6 +39,8 @@ dotenv.config();
         ContextModule,
         TagsModule,
         MilestonesModule,
+        SocketModule,
+        CommentsModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],
