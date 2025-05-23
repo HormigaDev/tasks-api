@@ -15,8 +15,6 @@ import { STORAGE_CLIENT_TOKEN, StorageGrpcService } from './gRPC/storage-client'
 import { firstValueFrom } from 'rxjs';
 import { GetFileResponse, SaveFileResponse } from './gRPC/proto/storage';
 
-type AttachAndErrors = [Attachment[], string[]];
-
 @Injectable()
 export class AttachmentsService extends UtilsService<Attachment> {
     constructor(
@@ -61,7 +59,7 @@ export class AttachmentsService extends UtilsService<Attachment> {
         }
     }
 
-    async saveMultiple(files: Express.Multer.File[]): Promise<AttachAndErrors> {
+    async saveMultiple(files: Express.Multer.File[]): Promise<[Attachment[], string[]]> {
         try {
             const user = this.context.user;
             const attachments: Attachment[] = [];

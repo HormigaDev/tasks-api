@@ -55,7 +55,7 @@ export class AttachmentsController {
             limits: { fileSize: Sizes.megabytes(2) },
         }),
     )
-    @RequirePermissions([Permissions.CreateAttachments, Permissions.UpdateAttachments], true)
+    @RequirePermissions([Permissions.SaveAttachments])
     async uploadFile(@UploadedFile() file: Express.Multer.File) {
         if (!file) {
             throw new BadRequestException('No hay archivo para guardar');
@@ -71,7 +71,7 @@ export class AttachmentsController {
             limits: { fileSize: Sizes.megabytes(2) },
         }),
     )
-    @RequirePermissions([Permissions.CreateAttachments, Permissions.UpdateAttachments], true)
+    @RequirePermissions([Permissions.SaveAttachments])
     async uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[]) {
         if (!Array.isArray(files)) {
             throw new BadRequestException('No fue informado el array de archivos');

@@ -52,7 +52,6 @@
         "ws": "^8.18.2"
     },
     "devDependencies": {
-        "@grpc/proto-loader": "^0.7.15",
         "@nestjs/cli": "^10.0.0",
         "@nestjs/schematics": "^10.0.0",
         "@nestjs/testing": "^10.0.0",
