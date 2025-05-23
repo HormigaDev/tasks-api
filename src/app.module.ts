@@ -15,6 +15,7 @@ import { TagsModule } from './modules/tags/tags.module';
 import { MilestonesModule } from './modules/milestones/milestones.module';
 import { SocketModule } from './modules/websocket/socket.module';
 import { CommentsModule } from './modules/comments/comments.module';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ dotenv.config();
         MilestonesModule,
         SocketModule,
         CommentsModule,
+        AttachmentsModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],

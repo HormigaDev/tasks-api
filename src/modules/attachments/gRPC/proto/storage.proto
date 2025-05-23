@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package storage;
+
+service StorageService {
+  rpc SaveFile (SaveFileRequest) returns (SaveFileResponse);
+  rpc GetFile (GetFileRequest) returns (GetFileResponse);
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+}
+
+message SaveFileRequest {
+  string user_id = 1;
+  string filename = 2;
+  bytes file_content = 3;
+}
+
+message SaveFileResponse {
+  bool success = 1;
+  string message = 2;
+  string stored_path = 3;
+}
+
+message GetFileRequest {
+  string user_id = 1;
+  string filename = 2;
+}
+
+message GetFileResponse {
+  bool success = 1;
+  string message = 2;
+  bytes file_content = 3;
+}
+
+message DeleteFileRequest {
+  string user_id = 1;
+  string filename = 2;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+  string message = 2;
+}
