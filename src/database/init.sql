@@ -175,7 +175,9 @@ create table if not exists attachments (
     name varchar(255) not null,
     type varchar(50) not null,
     file_url text not null,
-    uploaded_at timestamp default CURRENT_TIMESTAMP
+    user_id integer not null,
+    uploaded_at timestamp default CURRENT_TIMESTAMP,
+    foreign key (user_id) references users (id)
 );
 
 create table if not exists task_attachments (

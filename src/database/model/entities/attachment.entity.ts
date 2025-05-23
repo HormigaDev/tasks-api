@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from './user.entity';
 
 @Entity('attachments')
 export class Attachment {
@@ -13,4 +14,18 @@ export class Attachment {
 
     @Column({ name: 'file_url', type: 'text', nullable: false })
     url: string;
+
+    @ManyToOne(() => User, { nullable: false })
+    @JoinColumn({ name: 'user_id' })
+    user: User;
+
+    private buffer: Buffer<Uint8Array<ArrayBufferLike>>;
+
+    setBuffer(buffer: Buffer<Uint8Array<ArrayBufferLike>>) {
+        this.buffer = buffer;
+    }
+
+    getBuffer(): Buffer<Uint8Array<ArrayBufferLike>> {
+        return this.buffer;
+    }
 }
