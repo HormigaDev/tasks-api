@@ -51,10 +51,9 @@ export enum Permissions {
     UpdateComments = 2 ** 36,
     DeleteComments = 2 ** 37,
 
-    CreateAttachments = 2 ** 38,
+    SaveAttachments = 2 ** 38,
     ReadAttachments = 2 ** 39,
-    UpdateAttachments = 2 ** 40,
-    DeleteAttachments = 2 ** 41,
+    DeleteAttachments = 2 ** 40,
 }
 
 export const PermissionsDict = [
@@ -107,8 +106,7 @@ export const PermissionsDict = [
     { id: Permissions.UpdateComments, name: 'Actualizar Comentarios' },
     { id: Permissions.DeleteComments, name: 'Eliminar Comentarios' },
 
-    { id: Permissions.CreateAttachments, name: 'Crear Archivos Adjuntos' },
+    { id: Permissions.SaveAttachments, name: 'Guardar Archivos Adjuntos' },
     { id: Permissions.ReadAttachments, name: 'Ver Archivos Adjuntos' },
-    { id: Permissions.UpdateAttachments, name: 'Actualizar Archivos Adjuntos' },
     { id: Permissions.DeleteAttachments, name: 'Eliminar Archivos Adjuntos' },
 ];
