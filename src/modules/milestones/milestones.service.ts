@@ -5,11 +5,19 @@ import { Milestone } from 'src/database/model/entities/milestone.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { CreateMilestoneDto } from './DTOs/create-milestone.dto';
 import { UpdateMilestoneDto } from './DTOs/update-milestone.dto';
+import { ContextService } from '../context/context.service';
 
 @Injectable()
 export class MilestonesService extends UtilsService<Milestone> {
-    constructor(@InjectRepository(Milestone) private readonly repository: Repository<Milestone>) {
-        super(repository, 'MilestonesService');
+    constructor(
+        @InjectRepository(Milestone) private readonly _repository: Repository<Milestone>,
+        private readonly context: ContextService,
+    ) {
+        super(_repository, 'MilestonesService');
+    }
+    private get repository(): Repository<Milestone> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(Milestone) : this._repository;
     }
 
     async create(dto: CreateMilestoneDto, manager: EntityManager = null): Promise<Milestone> {
