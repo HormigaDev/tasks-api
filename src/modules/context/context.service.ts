@@ -33,8 +33,12 @@ export class ContextService {
         this.storage.getStore()?.set(ENTITY_MANAGER_KEY, em);
     }
 
-    getEntityManager(): EntityManager {
-        return this.storage.getStore()?.get(ENTITY_MANAGER_KEY) as EntityManager;
+    getEntityManager(options?: { throwError: boolean }): EntityManager {
+        const manager = this.storage.getStore()?.get(ENTITY_MANAGER_KEY) as EntityManager;
+        if (!manager && options.throwError) {
+            throw new Error('EntityManager no definida');
+        }
+        return manager;
     }
 
     releaseEntityManager() {
