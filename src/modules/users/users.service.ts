@@ -17,15 +17,22 @@ import { Permissions } from 'src/common/enums/Permissions.enum';
 import { UserStatus } from 'src/database/model/entities/user-status.entity';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UserFindFilters } from './DTOs/user-find-filters.dto';
+import { ContextService } from '../context/context.service';
 
 @Injectable()
 export class UsersService extends UtilsService<User> {
     constructor(
         @InjectRepository(User)
-        private readonly repository: Repository<User>,
+        private readonly _repository: Repository<User>,
         private readonly authService: AuthService,
+        private readonly context: ContextService,
     ) {
-        super(repository, 'UsersService');
+        super(_repository, 'UsersService');
+    }
+
+    private get repository(): Repository<User> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(User) : this._repository;
     }
 
     async find(filters: UserFindFilters): Promise<FindResult<User>> {

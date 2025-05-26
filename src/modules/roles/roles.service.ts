@@ -7,14 +7,21 @@ import { UpdateRoleDto } from 'src/common/validators/update-role.dto';
 import { Repository } from 'typeorm';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { RoleFindFilters } from './DTOs/role-find-filters.dto';
+import { ContextService } from '../context/context.service';
 
 @Injectable()
 export class RolesService extends UtilsService<Role> {
     constructor(
         @InjectRepository(Role)
-        private readonly repository: Repository<Role>,
+        private readonly _repository: Repository<Role>,
+        private readonly context: ContextService,
     ) {
-        super(repository, 'RolesService');
+        super(_repository, 'RolesService');
+    }
+
+    private get repository(): Repository<Role> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(Role) : this._repository;
     }
 
     async findByUser(id: number): Promise<Role[]> {

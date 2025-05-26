@@ -18,12 +18,17 @@ import { GetFileResponse, SaveFileResponse } from './gRPC/proto/storage';
 @Injectable()
 export class AttachmentsService extends UtilsService<Attachment> {
     constructor(
-        @InjectRepository(Attachment) private readonly repository: Repository<Attachment>,
+        @InjectRepository(Attachment) private readonly _repository: Repository<Attachment>,
         private readonly context: ContextService,
         @Inject(STORAGE_CLIENT_TOKEN)
         private readonly gRPC: StorageGrpcService,
     ) {
-        super(repository, 'AttachmentsService');
+        super(_repository, 'AttachmentsService');
+    }
+
+    private get repository(): Repository<Attachment> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(Attachment) : this._repository;
     }
 
     async save(file: Express.Multer.File): Promise<Attachment> {

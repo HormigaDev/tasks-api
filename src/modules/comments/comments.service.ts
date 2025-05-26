@@ -9,11 +9,20 @@ import { User } from 'src/database/model/entities/user.entity';
 import { Task } from 'src/database/model/entities/task.entity';
 import { Subtask } from 'src/database/model/entities/subtask.entity';
 import { EditCommentDto } from './DTOs/edit-comment.dto';
+import { ContextService } from '../context/context.service';
 
 @Injectable()
 export class CommentsService extends UtilsService<Comment> {
-    constructor(@InjectRepository(Comment) private readonly repository: Repository<Comment>) {
-        super(repository, 'CommentsService');
+    constructor(
+        @InjectRepository(Comment) private readonly _repository: Repository<Comment>,
+        private readonly context: ContextService,
+    ) {
+        super(_repository, 'CommentsService');
+    }
+
+    private get repository(): Repository<Comment> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(Comment) : this._repository;
     }
 
     async create(dto: CreateCommentDto): Promise<Comment> {

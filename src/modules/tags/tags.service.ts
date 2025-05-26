@@ -13,10 +13,15 @@ import { UpdateTagDto } from './DTOs/update-tag.dto';
 export class TagsService extends UtilsService<Tag> {
     constructor(
         @InjectRepository(Tag)
-        private readonly repository: Repository<Tag>,
+        private readonly _repository: Repository<Tag>,
         private readonly context: ContextService,
     ) {
-        super(repository, 'TagsService');
+        super(_repository, 'TagsService');
+    }
+
+    private get repository(): Repository<Tag> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(Tag) : this._repository;
     }
 
     async create(dto: CreateTagDto): Promise<Tag> {
