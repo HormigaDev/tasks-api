@@ -10,6 +10,8 @@ import { Task } from 'src/database/model/entities/task.entity';
 import { Subtask } from 'src/database/model/entities/subtask.entity';
 import { EditCommentDto } from './DTOs/edit-comment.dto';
 import { ContextService } from '../context/context.service';
+import { FindResult } from 'src/common/interfaces/find-result.interface';
+import { CommentFindFilters } from './DTOs/comment-find-filters.dto';
 
 @Injectable()
 export class CommentsService extends UtilsService<Comment> {
@@ -90,6 +92,19 @@ export class CommentsService extends UtilsService<Comment> {
             return comment;
         } catch (err) {
             this.handleError('findById', err);
+        }
+    }
+
+    async find(filters: CommentFindFilters): Promise<FindResult<Comment>> {
+        try {
+            const query = this.repository
+                .createQueryBuilder('comment')
+                .orderBy('comment.createdAt', 'DESC');
+            this.setPagination(query, filters.pagination);
+
+            return await query.getManyAndCount();
+        } catch (err) {
+            this.handleError('find', err);
         }
     }
 
