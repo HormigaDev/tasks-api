@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from 'src/database/model/entities/task.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ContextService } from '../context/context.service';
 import { UtilsService } from 'src/common/services/utils.service';
 import { CreateTaskDto } from './DTOs/create-task.dto';
@@ -29,18 +29,72 @@ export class TasksService extends UtilsService<Task> {
         return manager ? manager.getRepository(Task) : this._repository;
     }
 
+    private async getPriority(id: number): Promise<Priority> {
+        try {
+            const manager = this.context.getEntityManager() || this.repository.manager;
+            const repository = manager.getRepository(Priority);
+            const priority = repository.findOneBy({ id });
+            if (!priority) {
+                throw new NotFoundException(`Prioridad con ID "${id}" no encontrada`);
+            }
+
+            return priority;
+        } catch (err) {
+            this.handleError('getPriority', err);
+        }
+    }
+
+    private async setTags(tagsId: number[], task: Task) {
+        try {
+            const manager = this.context.getEntityManager({ throwError: true });
+            if (tagsId && tagsId.length > 0) {
+                const tagsRepository = manager.getRepository(Tag);
+                const tags = await tagsRepository
+                    .createQueryBuilder('tag')
+                    .select(['tag.id'])
+                    .where('tag.id in (:...tags)', { tags: tagsId })
+                    .getMany();
+
+                if (tags.length !== tagsId.length) {
+                    throw new BadRequestException('Una o más etiquetas no existen');
+                }
+
+                task.tags = tags;
+            }
+        } catch (err) {
+            this.handleError('setTags', err);
+        }
+    }
+
+    private async setAttachments(attachmentsId: number[], task: Task) {
+        try {
+            const manager = this.context.getEntityManager({ throwError: true });
+            if (attachmentsId && attachmentsId.length > 0) {
+                const attachmentRepository = manager.getRepository(Attachment);
+                const attachments = await attachmentRepository
+                    .createQueryBuilder('a')
+                    .select(['a.id'])
+                    .where('a.id in (:...attachments)', { attachments: attachmentsId })
+                    .getMany();
+
+                if (attachments.length !== attachmentsId.length) {
+                    throw new BadRequestException('Uno o más archivos adjuntos no existen');
+                }
+
+                task.attachments = attachments;
+            }
+        } catch (err) {
+            this.handleError('setAttachments', err);
+        }
+    }
+
     async create(dto: CreateTaskDto): Promise<Task> {
         try {
             return await this.repository.manager.transaction(async (manager) => {
                 try {
                     this.context.setEntityManager(manager);
                     const category = await this.categoriesService.findById(dto.category);
-                    const priority = await manager.findOneBy(Priority, { id: dto.priority });
-                    if (!priority) {
-                        throw new BadRequestException(
-                            `Priodidad con ID "${dto.priority}" no encontrada`,
-                        );
-                    }
+                    const priority = await this.getPriority(dto.priority);
 
                     const task = new Task();
                     task.title = dto.title;
@@ -51,36 +105,10 @@ export class TasksService extends UtilsService<Task> {
                     task.user = this.context.user;
 
                     // TODO: Limitar cantidad máxima de etiquetas en el futuro.
-                    if (dto.tags && dto.tags.length > 0) {
-                        const tagsRepository = manager.getRepository(Tag);
-                        const tags = await tagsRepository
-                            .createQueryBuilder('tag')
-                            .select(['tag.id'])
-                            .where('tag.id in (:...tags)', { tags: dto.tags })
-                            .getMany();
-
-                        if (tags.length !== dto.tags.length) {
-                            throw new BadRequestException('Una o más etiquetas no existen');
-                        }
-
-                        task.tags = tags;
-                    }
+                    await this.setTags(dto.tags, task);
 
                     // TODO: Limitar candidad máxima de archivos adjuntos en el futuro.
-                    if (dto.attachments && dto.attachments.length > 0) {
-                        const attachmentRepository = manager.getRepository(Attachment);
-                        const attachments = await attachmentRepository
-                            .createQueryBuilder('a')
-                            .select(['a.id'])
-                            .where('a.id in (:...attachments)', { attachments: dto.attachments })
-                            .getMany();
-
-                        if (attachments.length !== dto.attachments.length) {
-                            throw new BadRequestException('Uno o más archivos adjuntos no existen');
-                        }
-
-                        task.attachments = attachments;
-                    }
+                    await this.setAttachments(dto.attachments, task);
 
                     return await manager.save(task);
                 } catch (error) {
@@ -146,11 +174,7 @@ export class TasksService extends UtilsService<Task> {
                     if (dto.title) props.title = dto.title;
                     if (dto.description) props.description = dto.description;
                     if (dto.priority) {
-                        const priorityRepository = manager.getRepository(Priority);
-                        const priority = await priorityRepository.findOneBy({ id: dto.priority });
-                        if (!priority) {
-                            throw new NotFoundException('Prioridad no encontrada');
-                        }
+                        const priority = await this.getPriority(dto.priority);
                         props.priority = priority.id;
                     }
                     if (dto.category) {
