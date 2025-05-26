@@ -126,7 +126,7 @@ export class TasksService extends UtilsService<Task> {
         try {
             const task = await this.repository.findOne({
                 where: { id, user: this.context.user },
-                relations: ['comments', 'tags', 'milestones', 'attachments'],
+                relations: ['tags', 'milestones', 'attachments'],
             });
 
             if (!task) {
