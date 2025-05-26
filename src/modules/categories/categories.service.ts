@@ -12,10 +12,15 @@ import { FindResult } from 'src/common/interfaces/find-result.interface';
 @Injectable()
 export class CategoriesService extends UtilsService<Category> {
     constructor(
-        @InjectRepository(Category) private readonly repository: Repository<Category>,
+        @InjectRepository(Category) private readonly _repository: Repository<Category>,
         private context: ContextService,
     ) {
-        super(repository, 'CategoriesService');
+        super(_repository, 'CategoriesService');
+    }
+
+    private get repository(): Repository<Category> {
+        const manager = this.context.getEntityManager();
+        return manager ? manager.getRepository(Category) : this._repository;
     }
 
     async create(dto: CreateCategoryDto): Promise<Category> {

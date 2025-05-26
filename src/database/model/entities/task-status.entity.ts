@@ -6,6 +6,22 @@ export class TaskStatus {
     static Completed: number = 2;
     static Cancelled: number = 3;
 
+    static get pending(): TaskStatus {
+        const status = new TaskStatus();
+        status.id = TaskStatus.Pending;
+        return status;
+    }
+    static get completed(): TaskStatus {
+        const status = new TaskStatus();
+        status.id = TaskStatus.Completed;
+        return status;
+    }
+    static get cancelled(): TaskStatus {
+        const status = new TaskStatus();
+        status.id = TaskStatus.Cancelled;
+        return status;
+    }
+
     @PrimaryGeneratedColumn()
     id: number;
 
