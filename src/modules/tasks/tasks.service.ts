@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from 'src/database/model/entities/task.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ContextService } from '../context/context.service';
 import { UtilsService } from 'src/common/services/utils.service';
 import { CreateTaskDto } from './DTOs/create-task.dto';
