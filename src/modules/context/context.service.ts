@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
 import { User } from 'src/database/model/entities/user.entity';
+import { EntityManager } from 'typeorm';
+
+export const ENTITY_MANAGER_KEY = 'entity_manager';
 
 @Injectable()
 export class ContextService {
@@ -24,5 +27,17 @@ export class ContextService {
 
     get user(): User {
         return this.storage.getStore()?.get('userEntity') as User;
+    }
+
+    setEntityManager(em: EntityManager | undefined) {
+        this.storage.getStore()?.set(ENTITY_MANAGER_KEY, em);
+    }
+
+    getEntityManager(): EntityManager {
+        return this.storage.getStore()?.get(ENTITY_MANAGER_KEY) as EntityManager;
+    }
+
+    releaseEntityManager() {
+        this.set(ENTITY_MANAGER_KEY, null);
     }
 }
