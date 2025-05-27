@@ -46,6 +46,7 @@ export class TasksController {
     @HttpCode(201)
     @RequirePermissions([Permissions.CreateTasks])
     async createTask(@Body() body: CreateTaskDto) {
+        await this.service.validateTasksLimit();
         const task = await this.service.create(body);
         return { task };
     }

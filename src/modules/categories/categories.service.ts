@@ -8,6 +8,7 @@ import { ContextService } from '../context/context.service';
 import { UpdateCategoryDto } from './DTOs/update-category.dto';
 import { CategoryFindFiltersDto } from './DTOs/category-find-filters.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 
 @Injectable()
 export class CategoriesService extends UtilsService<Category> {
@@ -88,5 +89,16 @@ export class CategoriesService extends UtilsService<Category> {
     async findByName(name: string) {
         const category = await this.repository.findOneBy({ name, user: this.context.user });
         return category;
+    }
+
+    async validateCategoriesLimit(): Promise<void> {
+        try {
+            const count = await this.repository.count({ where: { user: this.context.user } });
+            if (count >= this.context.user.limits.maxCategories) {
+                throw new TooManyRequestsException('Límite de categorías alcanzado');
+            }
+        } catch (err) {
+            this.handleError('validateCategoriesLimit', err);
+        }
     }
 }

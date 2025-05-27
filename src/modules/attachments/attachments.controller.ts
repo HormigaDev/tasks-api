@@ -60,6 +60,7 @@ export class AttachmentsController {
         if (!file) {
             throw new BadRequestException('No hay archivo para guardar');
         }
+        await this.service.validateTotalStorage();
         const attachment = await this.service.save(file);
         return { attachment };
     }
@@ -80,6 +81,7 @@ export class AttachmentsController {
         if (files.length === 0) {
             throw new BadRequestException('No hay archivo para guardar');
         }
+        await this.service.validateTotalStorage();
         const [attachments, errors] = await this.service.saveMultiple(files);
         if (attachments.length === 0) {
             throw new BadRequestException('Archivos inválidos');

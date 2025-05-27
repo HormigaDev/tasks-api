@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { STORAGE_CLIENT_TOKEN, StorageGrpcService } from './gRPC/storage-client';
 import { firstValueFrom } from 'rxjs';
 import { GetFileResponse, SaveFileResponse } from './gRPC/proto/storage';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 
 @Injectable()
 export class AttachmentsService extends UtilsService<Attachment> {
@@ -56,6 +57,7 @@ export class AttachmentsService extends UtilsService<Attachment> {
             attachment.user = user;
             attachment.name = uuid;
             attachment.type = fileExtension;
+            attachment.size = file.size;
             attachment.url = `/attachments/download/${uuid}`;
 
             return await this.repository.save(attachment);
@@ -170,6 +172,17 @@ export class AttachmentsService extends UtilsService<Attachment> {
             await this.repository.delete(attachment.id);
         } catch (err) {
             this.handleError('delete', err);
+        }
+    }
+
+    async validateTotalStorage(): Promise<void> {
+        try {
+            const size = await this.repository.sum('size');
+            if (size >= this.context.user.limits.maxAttachmentsStorage) {
+                throw new TooManyRequestsException('Límite de almacenamiento alcanzado');
+            }
+        } catch (err) {
+            this.handleError('validateTotalStorage', err);
         }
     }
 }

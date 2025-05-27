@@ -12,6 +12,7 @@ import { EditCommentDto } from './DTOs/edit-comment.dto';
 import { ContextService } from '../context/context.service';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { CommentFindFilters } from './DTOs/comment-find-filters.dto';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 
 @Injectable()
 export class CommentsService extends UtilsService<Comment> {
@@ -138,6 +139,18 @@ export class CommentsService extends UtilsService<Comment> {
             await this.repository.delete(id);
         } catch (err) {
             this.handleError('delete', err);
+        }
+    }
+
+    async validateCommentsLimit(_user?: User) {
+        try {
+            const user = _user || this.context.user;
+            const count = await this.repository.count({ where: { user } });
+            if (count >= user.limits.maxComments) {
+                throw new TooManyRequestsException('Límite de comentarios alcanzado');
+            }
+        } catch (err) {
+            this.handleError('validateCommentsLimit', err);
         }
     }
 }

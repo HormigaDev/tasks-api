@@ -8,6 +8,7 @@ import { ContextService } from '../context/context.service';
 import { TagFindFiltersDto } from './DTOs/tag-find-filters.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UpdateTagDto } from './DTOs/update-tag.dto';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 
 @Injectable()
 export class TagsService extends UtilsService<Tag> {
@@ -94,6 +95,17 @@ export class TagsService extends UtilsService<Tag> {
             await this.repository.delete(id);
         } catch (err) {
             this.handleError('delete', err);
+        }
+    }
+
+    async validateTagsLimit(): Promise<void> {
+        try {
+            const count = await this.repository.count({ where: { user: this.context.user } });
+            if (count >= this.context.user.limits.maxTags) {
+                throw new TooManyRequestsException('Límite de etiquetas alcanzado');
+            }
+        } catch (err) {
+            this.handleError('validateTagsLimit', err);
         }
     }
 }

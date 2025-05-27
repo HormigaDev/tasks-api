@@ -38,6 +38,7 @@ export class TagsController {
     @HttpCode(201)
     @RequirePermissions([Permissions.CreateTags])
     async createTag(@Body() body: CreateTagDto) {
+        await this.service.validateTagsLimit();
         const tag = await this.service.create(body);
         return { tag };
     }

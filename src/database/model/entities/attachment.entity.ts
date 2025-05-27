@@ -15,6 +15,9 @@ export class Attachment {
     @Column({ name: 'file_url', type: 'text', nullable: false })
     url: string;
 
+    @Column({ name: 'attachment_size', type: 'integer', nullable: false })
+    size: number;
+
     @ManyToOne(() => User, { nullable: false })
     @JoinColumn({ name: 'user_id' })
     user: User;

@@ -51,7 +51,7 @@ export class Task {
     @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     updatedAt: Date;
 
-    @ManyToMany(() => Tag)
+    @ManyToMany(() => Tag, { cascade: true })
     @JoinTable({
         joinColumn: {
             name: 'task_id',
@@ -64,7 +64,7 @@ export class Task {
     })
     tags: Tag[];
 
-    @ManyToMany(() => Milestone)
+    @ManyToMany(() => Milestone, { cascade: true })
     @JoinTable({
         joinColumn: {
             name: 'task_id',
@@ -77,7 +77,7 @@ export class Task {
     })
     milestones: Milestone[];
 
-    @ManyToMany(() => Comment)
+    @ManyToMany(() => Comment, { cascade: true })
     @JoinTable({
         joinColumn: {
             name: 'task_id',
@@ -90,7 +90,7 @@ export class Task {
     })
     comments: Comment[];
 
-    @ManyToMany(() => Attachment)
+    @ManyToMany(() => Attachment, { cascade: true })
     @JoinTable({
         joinColumn: {
             name: 'task_id',

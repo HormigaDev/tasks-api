@@ -38,6 +38,7 @@ export class CategoriesController {
     @HttpCode(201)
     @RequirePermissions([Permissions.CreateCategories])
     async createCategory(@Body() body: CreateCategoryDto) {
+        await this.service.validateCategoriesLimit();
         const category = await this.service.create(body);
         return { category };
     }

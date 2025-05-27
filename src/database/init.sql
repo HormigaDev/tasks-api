@@ -174,6 +174,7 @@ create table if not exists attachments (
     id serial primary key,
     name varchar(255) not null,
     type varchar(50) not null,
+    attachment_size integer not null,
     file_url text not null,
     user_id integer not null,
     uploaded_at timestamp default CURRENT_TIMESTAMP,
@@ -210,5 +211,23 @@ create table if not exists history_logs (
     history_action history_logs_action not null,
     details jsonb not null,
     user_id integer not null,
+    foreign key (user_id) references users (id)
+);
+
+create table if not exists user_limits (
+    id serial primary key,
+    user_id integer not null,
+    max_tasks integer default 1000,
+    max_tags integer default 30,
+    max_categories integer default 10,
+    max_task_comments integer default 100,
+    max_subtask_comments integer default 100,
+    max_comments integer default 5000,
+    max_milestones_per_task integer default 50,
+    max_milestones_per_subtask integer default 50,
+    max_milestones integer default 500,
+    max_attachments_storage bigint default 104857600, -- 100MB
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp,
     foreign key (user_id) references users (id)
 );

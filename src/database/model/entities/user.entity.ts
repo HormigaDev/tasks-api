@@ -6,10 +6,12 @@ import {
     JoinTable,
     AfterLoad,
     ManyToOne,
+    OneToMany,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { UserStatus } from './user-status.entity';
 import { Permissions } from 'src/common/enums/Permissions.enum';
+import { UserLimits } from './user-limit.entity';
 
 @Entity('users')
 export class User {
@@ -27,6 +29,9 @@ export class User {
 
     @ManyToOne(() => UserStatus, { nullable: false, eager: true })
     status: UserStatus;
+
+    @OneToMany(() => UserLimits, (userLimits) => userLimits.user, { eager: true })
+    limits: UserLimits;
 
     @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;

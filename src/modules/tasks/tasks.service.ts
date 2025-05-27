@@ -13,6 +13,10 @@ import { Attachment } from 'src/database/model/entities/attachment.entity';
 import { TaskFindFilters } from './DTOs/task-find-filter.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UpdateTaskDto } from './DTOs/update-task.dto';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { CreateMilestoneDto } from '../milestones/DTOs/create-milestone.dto';
+import { Milestone } from 'src/database/model/entities/milestone.entity';
+import { MilestonesService } from '../milestones/milestones.service';
 
 @Injectable()
 export class TasksService extends UtilsService<Task> {
@@ -20,6 +24,7 @@ export class TasksService extends UtilsService<Task> {
         @InjectRepository(Task) private readonly _repository: Repository<Task>,
         private readonly context: ContextService,
         private readonly categoriesService: CategoriesService,
+        private readonly milestonesService: MilestonesService,
     ) {
         super(_repository, 'TasksService');
     }
@@ -88,6 +93,26 @@ export class TasksService extends UtilsService<Task> {
         }
     }
 
+    private async setMilestones(milestonesDto: CreateMilestoneDto[], task: Task) {
+        try {
+            await this.milestonesService.validateMilestonesLimit();
+            const milestones: Milestone[] = [];
+            for (const milestoneDto of milestonesDto) {
+                const milestone = new Milestone();
+                milestone.completed = false;
+                milestone.title = milestoneDto.title;
+                milestone.description = milestoneDto.description;
+                milestone.expectedDate = milestoneDto.expectedDate;
+
+                milestones.push(milestone);
+            }
+
+            task.milestones = milestones;
+        } catch (err) {
+            this.handleError('setMilestones', err);
+        }
+    }
+
     async create(dto: CreateTaskDto): Promise<Task> {
         try {
             return await this.repository.manager.transaction(async (manager) => {
@@ -104,11 +129,9 @@ export class TasksService extends UtilsService<Task> {
                     task.status = TaskStatus.pending;
                     task.user = this.context.user;
 
-                    // TODO: Limitar cantidad máxima de etiquetas en el futuro.
                     await this.setTags(dto.tags, task);
-
-                    // TODO: Limitar candidad máxima de archivos adjuntos en el futuro.
                     await this.setAttachments(dto.attachments, task);
+                    await this.setMilestones(dto.milestones, task);
 
                     return await manager.save(task);
                 } catch (error) {
@@ -238,6 +261,17 @@ export class TasksService extends UtilsService<Task> {
             await this.repository.delete(id);
         } catch (err) {
             this.handleError('delete', err);
+        }
+    }
+
+    async validateTasksLimit(): Promise<void> {
+        try {
+            const count = await this.repository.count({ where: { user: this.context.user } });
+            if (count >= this.context.user.limits.maxTasks) {
+                throw new TooManyRequestsException('Límite de tareas alcanzado');
+            }
+        } catch (err) {
+            this.handleError('valdiateTasksLimit', err);
         }
     }
 }
