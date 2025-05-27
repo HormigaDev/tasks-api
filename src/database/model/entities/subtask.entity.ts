@@ -11,7 +11,6 @@ import { Task } from './task.entity';
 import { TaskStatus } from './task-status.entity';
 import { Priority } from './priority.entity';
 import { Tag } from './tag.entity';
-import { Milestone } from './milestone.entity';
 import { Attachment } from './attachment.entity';
 import { Comment } from './comment.entity';
 
@@ -48,19 +47,6 @@ export class Subtask {
         },
     })
     tags: Tag[];
-
-    @ManyToMany(() => Milestone)
-    @JoinTable({
-        joinColumn: {
-            name: 'subtask_id',
-            referencedColumnName: 'id',
-        },
-        inverseJoinColumn: {
-            name: 'milestone_id',
-            referencedColumnName: 'id',
-        },
-    })
-    milestones: Milestone[];
 
     @ManyToMany(() => Comment)
     @JoinTable({

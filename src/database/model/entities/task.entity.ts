@@ -45,6 +45,10 @@ export class Task {
     @JoinColumn({ name: 'category_id' })
     category: Category;
 
+    @ManyToOne(() => Milestone, { nullable: true })
+    @JoinColumn({ name: 'milestone_id' })
+    milestone: Milestone;
+
     @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
@@ -63,19 +67,6 @@ export class Task {
         },
     })
     tags: Tag[];
-
-    @ManyToMany(() => Milestone, { cascade: true })
-    @JoinTable({
-        joinColumn: {
-            name: 'task_id',
-            referencedColumnName: 'id',
-        },
-        inverseJoinColumn: {
-            name: 'milestone_id',
-            referencedColumnName: 'id',
-        },
-    })
-    milestones: Milestone[];
 
     @ManyToMany(() => Comment, { cascade: true })
     @JoinTable({

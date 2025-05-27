@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsDateString, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsDateString, IsOptional, IsString, Length } from 'class-validator';
 
 export class UpdateMilestoneDto {
     @IsOptional()

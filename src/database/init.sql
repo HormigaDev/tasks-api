@@ -53,6 +53,16 @@ create table if not exists tags (
     foreign key (user_id) references users (id)
 );
 
+create table if not exists milestones (
+    id serial primary key,
+    title varchar(255) not null,
+    description text,
+    completed boolean default false,
+    user_id integer not null,
+    expected_date timestamp default CURRENT_TIMESTAMP,
+    foreign key (user_id) references users (id)
+);
+
 create table if not exists task_status (
     id serial primary key,
     name varchar(100) unique not null
@@ -84,12 +94,14 @@ create table if not exists tasks (
     status_id integer not null,
     priority_id integer not null,
     category_id integer not null,
+    milestone_id integer,
     created_at timestamp default CURRENT_TIMESTAMP,
     updated_at timestamp default CURRENT_TIMESTAMP,
     foreign key (user_id) references users (id),
     foreign key (status_id) references task_status (id),
     foreign key (priority_id) references priorities (id),
-    foreign key (category_id) references categories (id)
+    foreign key (category_id) references categories (id),
+    foreign key (milestone_id) references milestones (id)
 );
 
 create table if not exists task_tags (
@@ -98,22 +110,6 @@ create table if not exists task_tags (
     primary key (task_id, tag_id),
     foreign key (task_id) references tasks (id) on delete cascade,
     foreign key (tag_id) references tags (id)
-);
-
-create table if not exists milestones (
-    id serial primary key,
-    title varchar(255) not null,
-    description text,
-    completed boolean default false,
-    expected_date timestamp default CURRENT_TIMESTAMP
-);
-
-create table if not exists task_milestones (
-    task_id integer not null,
-    milestone_id integer not null,
-    primary key (task_id, milestone_id),
-    foreign key (task_id) references tasks (id) on delete cascade,
-    foreign key (milestone_id) references milestones (id)
 );
 
 create table if not exists subtasks (
@@ -136,14 +132,6 @@ create table if not exists subtask_tags (
     primary key (subtask_id, tag_id),
     foreign key (subtask_id) references subtasks (id) on delete cascade,
     foreign key (tag_id) references tags (id)
-);
-
-create table if not exists subtask_milestones (
-    subtask_id integer not null,
-    milestone_id integer not null,
-    primary key (subtask_id, milestone_id),
-    foreign key (subtask_id) references subtasks (id) on delete cascade,
-    foreign key (milestone_id) references milestones (id)
 );
 
 create table if not exists comments (
@@ -224,7 +212,6 @@ create table if not exists user_limits (
     max_subtask_comments integer default 100, -- TODO: Implementar
     max_comments integer default 5000,
     max_milestones_per_task integer default 50, -- TODO: Implementar
-    max_milestones_per_subtask integer default 50, -- TODO: Implementar
     max_milestones integer default 500,
     max_attachments_storage bigint default 104857600, -- 100MB
     created_at timestamp default current_timestamp,
