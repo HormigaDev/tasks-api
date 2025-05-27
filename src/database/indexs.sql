@@ -43,5 +43,5 @@ create index if not exists idx_subtask_attachments_attachment_id on subtask_atta
 create index if not exists idx_notifications_task_id on notifications (task_id);
 
 create index if not exists idx_history_logs_user_id on history_logs (user_id);
-create index if not exists idx_user_limits_user_id on user_limtis (user_id);
+create index if not exists idx_user_limits_user_id on user_limits (user_id);
 create index if not exists idx_tasks_milestone_id on tasks (milestone_id)
