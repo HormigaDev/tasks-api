@@ -220,11 +220,11 @@ create table if not exists user_limits (
     max_tasks integer default 1000,
     max_tags integer default 30,
     max_categories integer default 10,
-    max_task_comments integer default 100,
-    max_subtask_comments integer default 100,
+    max_task_comments integer default 100, -- TODO: Implementar
+    max_subtask_comments integer default 100, -- TODO: Implementar
     max_comments integer default 5000,
-    max_milestones_per_task integer default 50,
-    max_milestones_per_subtask integer default 50,
+    max_milestones_per_task integer default 50, -- TODO: Implementar
+    max_milestones_per_subtask integer default 50, -- TODO: Implementar
     max_milestones integer default 500,
     max_attachments_storage bigint default 104857600, -- 100MB
     created_at timestamp default current_timestamp,
