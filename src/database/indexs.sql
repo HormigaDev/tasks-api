@@ -18,17 +18,11 @@ create index if not exists idx_tags_user_id on tags (user_id);
 create index if not exists idx_task_tags_task_id on task_tags (task_id);
 create index if not exists idx_task_tags_tag_id on task_tags (tag_id);
 
-create index if not exists idx_task_milestones_task_id on task_milestones (task_id);
-create index if not exists idx_task_milestones_milestone_id on task_milestones (milestone_id);
-
 create index if not exists idx_subtasks_task_id on subtasks (task_id);
 create index if not exists idx_subtasks_priority_id on subtasks (priority_id);
 
 create index if not exists idx_subtask_tags_subtask_id on subtask_tags (subtask_id);
 create index if not exists idx_subtask_tags_tag_id on subtask_tags (tag_id);
-
-create index if not exists idx_subtask_milestones_subtask_id on subtask_milestones (subtask_id);
-create index if not exists idx_subtask_milestones_milestone_id on subtask_milestones (milestone_id);
 
 create index if not exists idx_comments_user_id on comments (user_id);
 
@@ -50,3 +44,4 @@ create index if not exists idx_notifications_task_id on notifications (task_id);
 
 create index if not exists idx_history_logs_user_id on history_logs (user_id);
 create index if not exists idx_user_limits_user_id on user_limtis (user_id);
+create index if not exists idx_tasks_milestone_id on tasks (milestone_id)

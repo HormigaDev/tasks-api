@@ -27,4 +27,12 @@ export class UpdateTaskDto {
         { message: 'El ID de la categoría debe ser un número entero válido' },
     )
     readonly category?: number;
+
+    @IsOptional()
+    @Transform(({ value }) => Number(value))
+    @IsNumber(
+        { allowNaN: false, maxDecimalPlaces: 0 },
+        { message: 'El ID del hito debe ser un número entero válido' },
+    )
+    milestone?: number;
 }

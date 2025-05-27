@@ -93,26 +93,6 @@ export class TasksService extends UtilsService<Task> {
         }
     }
 
-    private async setMilestones(milestonesDto: CreateMilestoneDto[], task: Task) {
-        try {
-            await this.milestonesService.validateMilestonesLimit();
-            const milestones: Milestone[] = [];
-            for (const milestoneDto of milestonesDto) {
-                const milestone = new Milestone();
-                milestone.completed = false;
-                milestone.title = milestoneDto.title;
-                milestone.description = milestoneDto.description;
-                milestone.expectedDate = milestoneDto.expectedDate;
-
-                milestones.push(milestone);
-            }
-
-            task.milestones = milestones;
-        } catch (err) {
-            this.handleError('setMilestones', err);
-        }
-    }
-
     async create(dto: CreateTaskDto): Promise<Task> {
         try {
             return await this.repository.manager.transaction(async (manager) => {
@@ -129,9 +109,13 @@ export class TasksService extends UtilsService<Task> {
                     task.status = TaskStatus.pending;
                     task.user = this.context.user;
 
+                    if (dto.milestone) {
+                        const milestone = await this.milestonesService.findById(dto.milestone);
+                        task.milestone = milestone;
+                    }
+
                     await this.setTags(dto.tags, task);
                     await this.setAttachments(dto.attachments, task);
-                    await this.setMilestones(dto.milestones, task);
 
                     return await manager.save(task);
                 } catch (error) {
@@ -203,6 +187,11 @@ export class TasksService extends UtilsService<Task> {
                     if (dto.category) {
                         const category = await this.categoriesService.findById(dto.category);
                         props.category = category.id;
+                    }
+
+                    if (dto.milestone) {
+                        const milestone = await this.milestonesService.findById(dto.milestone);
+                        props.milestone = milestone.id;
                     }
 
                     if (Object.keys(props).length === 0) {

@@ -17,6 +17,7 @@ export class ContextInterceptor implements NestInterceptor {
 
                 if (request.user) {
                     const user = await this.usersService.findById(request.user.userId);
+                    user.password = null;
                     this.contextService.set('userEntity', user);
                 }
 
