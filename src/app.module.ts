@@ -17,6 +17,7 @@ import { SocketModule } from './modules/websocket/socket.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { SubtasksModule } from './modules/subtasks/subtasks.module';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ dotenv.config();
         CommentsModule,
         AttachmentsModule,
         TasksModule,
+        SubtasksModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],

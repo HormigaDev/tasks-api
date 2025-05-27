@@ -114,11 +114,11 @@ create table if not exists task_tags (
 
 create table if not exists subtasks (
     id serial primary key,
-    task_id integer not null,
     title varchar(255) not null,
     description text,
     status_id integer not null,
     priority_id integer not null,
+    task_id integer not null,
     created_at timestamp default CURRENT_TIMESTAMP,
     updated_at timestamp default CURRENT_TIMESTAMP,
     foreign key (task_id) references tasks (id) on delete cascade,
@@ -209,6 +209,7 @@ create table if not exists user_limits (
     max_tasks_per_milestone integer default 30,
     max_tags integer default 30,
     max_categories integer default 10,
+    max_subtasks_per_task integer default 5,
     max_task_comments integer default 100, -- TODO: Implementar
     max_subtask_comments integer default 100, -- TODO: Implementar
     max_comments integer default 5000,
