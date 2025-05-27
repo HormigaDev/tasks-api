@@ -35,6 +35,12 @@ export class Subtask {
     @ManyToOne(() => Priority, { nullable: false, eager: true })
     priority: Priority;
 
+    @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    createdAt: Date;
+
+    @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    updatedAt: Date;
+
     @ManyToMany(() => Tag)
     @JoinTable({
         joinColumn: {

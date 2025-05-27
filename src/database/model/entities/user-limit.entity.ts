@@ -20,6 +20,9 @@ export class UserLimits {
     @Column({ name: 'max_categories', type: 'integer', default: 10 })
     maxCategories: number;
 
+    @Column({ name: 'max_subtasks_per_task', type: 'integer', default: 5 })
+    maxSubtasksPerTask: number;
+
     // Comentarios
     @Column({ name: 'max_comments', type: 'integer', default: 5000 })
     maxComments: number;
