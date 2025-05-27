@@ -6,8 +6,8 @@ import { MilestonesController } from './milestones.controller';
 
 @Module({
     imports: [TypeOrmModule.forFeature([Milestone])],
+    controllers: [MilestonesController],
     providers: [MilestonesService],
     exports: [MilestonesService],
-    controllers: [MilestonesController],
 })
 export class MilestonesModule {}
