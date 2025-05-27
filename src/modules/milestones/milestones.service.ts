@@ -6,6 +6,7 @@ import { EntityManager, Repository } from 'typeorm';
 import { CreateMilestoneDto } from './DTOs/create-milestone.dto';
 import { UpdateMilestoneDto } from './DTOs/update-milestone.dto';
 import { ContextService } from '../context/context.service';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 
 @Injectable()
 export class MilestonesService extends UtilsService<Milestone> {
@@ -71,6 +72,24 @@ export class MilestonesService extends UtilsService<Milestone> {
             await em.delete(Milestone, id);
         } catch (err) {
             this.handleError('delete', err);
+        }
+    }
+
+    async validateMilestonesLimit(): Promise<void> {
+        try {
+            const query = await this.repository.manager.query(`
+                select
+                    count(m.id) as count
+                from milestones m
+                inner join tasks t on t.id = m.task_id
+                inner join users u on u.id = t.user_id
+            `);
+            const count: number = query.count;
+            if (count >= this.context.user.limits.maxMilestones) {
+                throw new TooManyRequestsException('Límite de hitos alcanzado');
+            }
+        } catch (err) {
+            this.handleError('validateMilestonesLimit', err);
         }
     }
 }

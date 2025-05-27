@@ -77,6 +77,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: WebSocket,
         @ValidatedMessage(CreateCommentDto) dto: CreateCommentDto,
     ) {
+        await this.commentsService.validateCommentsLimit(user);
         dto.user = user;
         const comment = await this.commentsService.create(dto);
 
