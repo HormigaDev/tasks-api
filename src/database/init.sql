@@ -206,6 +206,7 @@ create table if not exists user_limits (
     id serial primary key,
     user_id integer not null,
     max_tasks integer default 1000,
+    max_tasks_per_milestone integer default 30,
     max_tags integer default 30,
     max_categories integer default 10,
     max_task_comments integer default 100, -- TODO: Implementar

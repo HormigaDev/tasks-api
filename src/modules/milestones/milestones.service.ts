@@ -49,6 +49,7 @@ export class MilestonesService extends UtilsService<Milestone> {
                     'm.completed',
                     'task.id',
                     'task.title',
+                    'task.status',
                 ])
                 .innerJoin('m.tasks', 'task')
                 .where('m.id = :id', { id })
@@ -57,6 +58,9 @@ export class MilestonesService extends UtilsService<Milestone> {
             if (!milestone) {
                 throw new NotFoundException(`Hito con el ID "${id}" no encontrado"`);
             }
+
+            // Calcula el porcentaje de finalización según las tareas vinculadas
+            milestone.getCompletionPercentage(this.repository.manager.getRepository(Task));
 
             return milestone;
         } catch (err) {
@@ -140,6 +144,27 @@ export class MilestonesService extends UtilsService<Milestone> {
             }
         } catch (err) {
             this.handleError('validateMilestonesLimit', err);
+        }
+    }
+
+    async validateTasksPerMilestoneLimit(id: number): Promise<void> {
+        try {
+            const query = await this.repository.manager.query(
+                `
+                select
+                    count(*) as count
+                from tasks
+                where milestone_id = $1 and user_id = $2
+            `,
+                [id, this.context.user.id],
+            );
+
+            const count: number = query.count;
+            if (count >= this.context.user.limits.maxTasksPerMilestone) {
+                throw new TooManyRequestsException('Límite de tareas por hito alcanzado');
+            }
+        } catch (err) {
+            this.handleError('validateTasksPerMilestoneLimit', err);
         }
     }
 }

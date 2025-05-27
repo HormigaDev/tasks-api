@@ -11,6 +11,9 @@ export class UserLimits {
     @Column({ name: 'max_tasks', type: 'integer', default: 1000 })
     maxTasks: number;
 
+    @Column({ name: 'max_tasks_per_milestone', type: 'integer', default: 30 })
+    maxTasksPerMilestone: number;
+
     @Column({ name: 'max_tags', type: 'integer', default: 30 })
     maxTags: number;
 

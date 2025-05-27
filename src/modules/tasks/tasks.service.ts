@@ -110,6 +110,7 @@ export class TasksService extends UtilsService<Task> {
                     task.user = this.context.user;
 
                     if (dto.milestone) {
+                        await this.milestonesService.validateTasksPerMilestoneLimit(dto.milestone);
                         const milestone = await this.milestonesService.findById(dto.milestone);
                         task.milestone = milestone;
                     }
