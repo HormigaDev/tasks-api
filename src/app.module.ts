@@ -18,6 +18,7 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { SubtasksModule } from './modules/subtasks/subtasks.module';
+import { LogsModule } from './modules/logs/logs.module';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ dotenv.config();
         AttachmentsModule,
         TasksModule,
         SubtasksModule,
+        LogsModule,
     ],
     controllers: [AppController],
     providers: [AppService, JwtStrategy, JwtAuthGuard],

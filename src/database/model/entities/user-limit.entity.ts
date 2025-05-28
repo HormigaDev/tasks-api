@@ -35,6 +35,9 @@ export class UserLimits {
     @Column({ name: 'max_attachments_storage', type: 'integer', default: Sizes.megabytes(100) })
     maxAttachmentsStorage: number;
 
+    @Column({ name: 'max_roles', type: 'integer', default: 5 })
+    maxRoles: number;
+
     // TODO: Implementar las columnas 'max_task_comments', 'max_subtask_comments', 'max_milestones_per_task', 'mask_milestones_per_subtask'
 
     @ManyToOne(() => User, { nullable: false })

@@ -15,6 +15,7 @@ import { STORAGE_CLIENT_TOKEN, StorageGrpcService } from './gRPC/storage-client'
 import { firstValueFrom } from 'rxjs';
 import { GetFileResponse, SaveFileResponse } from './gRPC/proto/storage';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class AttachmentsService extends UtilsService<Attachment> {
@@ -23,6 +24,7 @@ export class AttachmentsService extends UtilsService<Attachment> {
         private readonly context: ContextService,
         @Inject(STORAGE_CLIENT_TOKEN)
         private readonly gRPC: StorageGrpcService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'AttachmentsService');
     }
@@ -34,33 +36,53 @@ export class AttachmentsService extends UtilsService<Attachment> {
 
     async save(file: Express.Multer.File): Promise<Attachment> {
         try {
-            const user = this.context.user;
-            const fileExtension = extname(file.originalname);
-            let uuid: string;
-            do {
-                uuid = uuidv4();
-            } while (await this.repository.exists({ where: { name: uuid, user } }));
+            const saveFile = async () => {
+                const user = this.context.user;
+                const fileExtension = extname(file.originalname);
+                let uuid: string;
+                do {
+                    uuid = uuidv4();
+                } while (await this.repository.exists({ where: { name: uuid, user } }));
 
-            const filename = `${uuid}${fileExtension}`;
+                const filename = `${uuid}${fileExtension}`;
 
-            const response: SaveFileResponse = await firstValueFrom(
-                this.gRPC.saveFile({ userId: `${user.id}`, filename, fileContent: file.buffer }),
-            );
-
-            if (!response.success) {
-                throw new InternalServerErrorException(
-                    'Ocurrió un error inesperado al guardar el archivo',
+                const response: SaveFileResponse = await firstValueFrom(
+                    this.gRPC.saveFile({
+                        userId: `${user.id}`,
+                        filename,
+                        fileContent: file.buffer,
+                    }),
                 );
-            }
 
-            const attachment = new Attachment();
-            attachment.user = user;
-            attachment.name = uuid;
-            attachment.type = fileExtension;
-            attachment.size = file.size;
-            attachment.url = `/attachments/download/${uuid}`;
+                if (!response.success) {
+                    throw new InternalServerErrorException(
+                        'Ocurrió un error inesperado al guardar el archivo',
+                    );
+                }
 
-            return await this.repository.save(attachment);
+                const attachment = new Attachment();
+                attachment.user = user;
+                attachment.name = uuid;
+                attachment.type = fileExtension;
+                attachment.size = file.size;
+                attachment.url = `/attachments/download/${uuid}`;
+
+                const newAttachment = await this.repository.save(attachment);
+                await this.logs.setNew(newAttachment.id);
+                await this.logs.save();
+                return newAttachment;
+            };
+
+            return this.context.getEntityManager()
+                ? await saveFile()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await saveFile();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('save', err);
         }
@@ -157,19 +179,37 @@ export class AttachmentsService extends UtilsService<Attachment> {
 
     async delete(id: number): Promise<void> {
         try {
-            const attachment = await this.findById(id);
-            const response = await firstValueFrom(
-                this.gRPC.deleteFile({
-                    userId: `${this.context.user.id}`,
-                    filename: `${attachment.name}${attachment.type}`,
-                }),
-            );
+            const deleteFile = async () => {
+                this.logs.setEntity(Attachment);
+                await this.logs.setOld(id);
+                const attachment = await this.findById(id);
+                const response = await firstValueFrom(
+                    this.gRPC.deleteFile({
+                        userId: `${this.context.user.id}`,
+                        filename: `${attachment.name}${attachment.type}`,
+                    }),
+                );
 
-            if (!response.success) {
-                throw new InternalServerErrorException('Error al eliminar el archivo');
-            }
+                if (!response.success) {
+                    throw new InternalServerErrorException('Error al eliminar el archivo');
+                }
 
-            await this.repository.delete(attachment.id);
+                await this.repository.delete(attachment.id);
+                await this.logs.save();
+            };
+
+            return this.context.getEntityManager()
+                ? await deleteFile()
+                : this.context.getEntityManager()
+                  ? await deleteFile()
+                  : await this.repository.manager.transaction(async (manager) => {
+                        try {
+                            this.context.setEntityManager(manager);
+                            return await deleteFile();
+                        } finally {
+                            this.context.releaseEntityManager();
+                        }
+                    });
         } catch (err) {
             this.handleError('delete', err);
         }

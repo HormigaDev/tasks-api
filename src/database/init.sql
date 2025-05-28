@@ -198,7 +198,10 @@ create table if not exists history_logs (
     id serial primary key,
     history_action history_logs_action not null,
     details jsonb not null,
+    record_id integer not null,
+    table_name varchar(100) not null,
     user_id integer not null,
+    created_at timestamp default CURRENT_TIMESTAMP,
     foreign key (user_id) references users (id)
 );
 
@@ -216,6 +219,7 @@ create table if not exists user_limits (
     max_milestones_per_task integer default 50, -- TODO: Implementar
     max_milestones integer default 500,
     max_attachments_storage bigint default 104857600, -- 100MB
+    max_roles integer default 5,
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp,
     foreign key (user_id) references users (id)

@@ -10,12 +10,14 @@ import { TooManyRequestsException } from 'src/common/types/TooManyRequestsExcept
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { MilestoneFindFilters } from './DTOs/milestone-find-filters.dto';
 import { Task } from 'src/database/model/entities/task.entity';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class MilestonesService extends UtilsService<Milestone> {
     constructor(
         @InjectRepository(Milestone) private readonly _repository: Repository<Milestone>,
         private readonly context: ContextService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'MilestonesService');
     }
@@ -26,13 +28,30 @@ export class MilestonesService extends UtilsService<Milestone> {
 
     async create(dto: CreateMilestoneDto): Promise<Milestone> {
         try {
-            const milestone = new Milestone();
-            milestone.title = dto.title;
-            milestone.description = dto.description;
-            milestone.expectedDate = dto.expectedDate || new Date();
-            milestone.completed = false;
+            const createMilestone = async () => {
+                this.logs.setEntity(Milestone);
+                const milestone = new Milestone();
+                milestone.title = dto.title;
+                milestone.description = dto.description;
+                milestone.expectedDate = dto.expectedDate || new Date();
+                milestone.completed = false;
 
-            return await this.repository.save(milestone);
+                const savedMilestone = await this.repository.save(milestone);
+                await this.logs.setNew(savedMilestone.id);
+                await this.logs.save();
+
+                return savedMilestone;
+            };
+            return this.context.getEntityManager()
+                ? await createMilestone()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createMilestone();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -89,9 +108,25 @@ export class MilestonesService extends UtilsService<Milestone> {
 
     async update(id: number, dto: UpdateMilestoneDto): Promise<Milestone> {
         try {
-            await this.findById(id);
-            await this.updateEntity(id, dto, this.repository);
-            return this.repository.findOneBy({ id });
+            const updateMilestone = async () => {
+                this.logs.setEntity(Milestone);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.updateEntity(id, dto, this.repository);
+                await this.logs.setNew(id);
+                await this.logs.save();
+                return this.repository.findOneBy({ id });
+            };
+            return this.context.getEntityManager()
+                ? await updateMilestone()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateMilestone();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('update', err);
         }
@@ -99,20 +134,37 @@ export class MilestonesService extends UtilsService<Milestone> {
 
     async completeMilestone(id: number): Promise<boolean> {
         try {
-            const milestone = await this.findById(id);
-            const tasksRepository = this.repository.manager.getRepository(Task);
-            if ((await milestone.getCompletionPercentage(tasksRepository)) < 100) {
-                return false;
-            }
+            const updateMilestone = async () => {
+                this.logs.setEntity(Milestone);
+                await this.logs.setOld(id);
+                const milestone = await this.findById(id);
+                const tasksRepository = this.repository.manager.getRepository(Task);
+                if ((await milestone.getCompletionPercentage(tasksRepository)) < 100) {
+                    return false;
+                }
 
-            await this.repository
-                .createQueryBuilder('m')
-                .update()
-                .set({ completed: true })
-                .where('m.id = :id', { id })
-                .execute();
+                await this.repository
+                    .createQueryBuilder('m')
+                    .update()
+                    .set({ completed: true })
+                    .where('m.id = :id', { id })
+                    .execute();
 
-            return true;
+                await this.logs.setNew(id);
+                await this.logs.save();
+
+                return true;
+            };
+            return this.context.getEntityManager()
+                ? await updateMilestone()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateMilestone();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('completeMilestone', err);
         }
@@ -120,8 +172,23 @@ export class MilestonesService extends UtilsService<Milestone> {
 
     async delete(id: number): Promise<void> {
         try {
-            await this.findById(id);
-            await this.repository.delete(id);
+            const deleteMilestone = async () => {
+                this.logs.setEntity(Milestone);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.repository.delete(id);
+                await this.logs.save();
+            };
+            return this.context.getEntityManager()
+                ? await deleteMilestone()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await deleteMilestone();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('delete', err);
         }

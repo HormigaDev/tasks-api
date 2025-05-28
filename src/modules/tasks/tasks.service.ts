@@ -14,9 +14,8 @@ import { TaskFindFilters } from './DTOs/task-find-filter.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UpdateTaskDto } from './DTOs/update-task.dto';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
-import { CreateMilestoneDto } from '../milestones/DTOs/create-milestone.dto';
-import { Milestone } from 'src/database/model/entities/milestone.entity';
 import { MilestonesService } from '../milestones/milestones.service';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class TasksService extends UtilsService<Task> {
@@ -25,6 +24,7 @@ export class TasksService extends UtilsService<Task> {
         private readonly context: ContextService,
         private readonly categoriesService: CategoriesService,
         private readonly milestonesService: MilestonesService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'TasksService');
     }
@@ -95,36 +95,47 @@ export class TasksService extends UtilsService<Task> {
 
     async create(dto: CreateTaskDto): Promise<Task> {
         try {
-            return await this.repository.manager.transaction(async (manager) => {
-                try {
-                    this.context.setEntityManager(manager);
-                    const category = await this.categoriesService.findById(dto.category);
-                    const priority = await this.getPriority(dto.priority);
+            const createTask = async () => {
+                this.logs.setEntity(Task);
+                const category = await this.categoriesService.findById(dto.category);
+                const priority = await this.getPriority(dto.priority);
 
-                    const task = new Task();
-                    task.title = dto.title;
-                    task.description = dto.description;
-                    task.category = category;
-                    task.priority = priority;
-                    task.status = TaskStatus.pending;
-                    task.user = this.context.user;
+                const task = new Task();
+                task.title = dto.title;
+                task.description = dto.description;
+                task.category = category;
+                task.priority = priority;
+                task.status = TaskStatus.pending;
+                task.user = this.context.user;
 
-                    if (dto.milestone) {
-                        await this.milestonesService.validateTasksPerMilestoneLimit(dto.milestone);
-                        const milestone = await this.milestonesService.findById(dto.milestone);
-                        task.milestone = milestone;
-                    }
-
-                    await this.setTags(dto.tags, task);
-                    await this.setAttachments(dto.attachments, task);
-
-                    return await manager.save(task);
-                } catch (error) {
-                    throw error;
-                } finally {
-                    this.context.releaseEntityManager();
+                if (dto.milestone) {
+                    await this.milestonesService.validateTasksPerMilestoneLimit(dto.milestone);
+                    const milestone = await this.milestonesService.findById(dto.milestone);
+                    task.milestone = milestone;
                 }
-            });
+
+                await this.setTags(dto.tags, task);
+                await this.setAttachments(dto.attachments, task);
+
+                const savedTask = await this.context.getEntityManager().save(task);
+                await this.logs.setNew(savedTask.id);
+                await this.logs.save();
+
+                return savedTask;
+            };
+
+            return this.context.getEntityManager()
+                ? await createTask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createTask();
+                      } catch (error) {
+                          throw error;
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -174,47 +185,56 @@ export class TasksService extends UtilsService<Task> {
 
     async update(id: number, dto: UpdateTaskDto): Promise<Task> {
         try {
-            await this.findById(id);
-            return await this.repository.manager.transaction(async (manager) => {
-                try {
-                    this.context.setEntityManager(manager);
-                    let props: Record<string, any> = {};
-                    if (dto.title) props.title = dto.title;
-                    if (dto.description) props.description = dto.description;
-                    if (dto.priority) {
-                        const priority = await this.getPriority(dto.priority);
-                        props.priority = priority.id;
-                    }
-                    if (dto.category) {
-                        const category = await this.categoriesService.findById(dto.category);
-                        props.category = category.id;
-                    }
-
-                    if (dto.milestone) {
-                        const milestone = await this.milestonesService.findById(dto.milestone);
-                        props.milestone = milestone.id;
-                    }
-
-                    if (Object.keys(props).length === 0) {
-                        throw new BadRequestException(
-                            'Ningún dato informado para actualizar la tarea',
-                        );
-                    }
-
-                    await this.repository
-                        .createQueryBuilder()
-                        .update()
-                        .set(props)
-                        .where('id = :id and user.id = :user', { id, user: this.context.user.id })
-                        .execute();
-
-                    return await this.findById(id);
-                } catch (error) {
-                    throw error;
-                } finally {
-                    this.context.releaseEntityManager();
+            const updateTask = async () => {
+                this.logs.setEntity(Task);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                let props: Record<string, any> = {};
+                if (dto.title) props.title = dto.title;
+                if (dto.description) props.description = dto.description;
+                if (dto.priority) {
+                    const priority = await this.getPriority(dto.priority);
+                    props.priority = priority.id;
                 }
-            });
+                if (dto.category) {
+                    const category = await this.categoriesService.findById(dto.category);
+                    props.category = category.id;
+                }
+
+                if (dto.milestone) {
+                    const milestone = await this.milestonesService.findById(dto.milestone);
+                    props.milestone = milestone.id;
+                }
+
+                if (Object.keys(props).length === 0) {
+                    throw new BadRequestException('Ningún dato informado para actualizar la tarea');
+                }
+
+                await this.repository
+                    .createQueryBuilder()
+                    .update()
+                    .set(props)
+                    .where('id = :id and user.id = :user', { id, user: this.context.user.id })
+                    .execute();
+
+                await this.logs.setNew(id);
+                await this.logs.save();
+
+                return await this.findById(id);
+            };
+
+            return this.context.getEntityManager()
+                ? await updateTask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateTask();
+                      } catch (error) {
+                          throw error;
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('update', err);
         }
@@ -222,24 +242,35 @@ export class TasksService extends UtilsService<Task> {
 
     async setTaskStatus(id: number, status: TaskStatus): Promise<Task> {
         try {
-            return await this.repository.manager.transaction(async (manager) => {
-                try {
-                    this.context.setEntityManager(manager);
-                    await this.findById(id);
-                    await this.repository
-                        .createQueryBuilder()
-                        .update()
-                        .set({ status })
-                        .where('id = :id and user.id = :user', { id, user: this.context.user.id })
-                        .execute();
+            const updateTask = async () => {
+                this.logs.setEntity(Task);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.repository
+                    .createQueryBuilder()
+                    .update()
+                    .set({ status })
+                    .where('id = :id and user.id = :user', { id, user: this.context.user.id })
+                    .execute();
 
-                    return await this.findById(id);
-                } catch (error) {
-                    throw error;
-                } finally {
-                    this.context.releaseEntityManager();
-                }
-            });
+                await this.logs.setNew(id);
+                await this.logs.save();
+
+                return await this.findById(id);
+            };
+
+            return this.context.getEntityManager()
+                ? await updateTask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateTask();
+                      } catch (error) {
+                          throw error;
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('setTaskStatus', err);
         }
@@ -247,8 +278,23 @@ export class TasksService extends UtilsService<Task> {
 
     async delete(id: number): Promise<void> {
         try {
-            await this.findById(id);
-            await this.repository.delete(id);
+            const deleteTask = async () => {
+                this.logs.setEntity(Task);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.repository.delete(id);
+                await this.logs.save();
+            };
+            return this.context.getEntityManager()
+                ? await deleteTask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await deleteTask();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('delete', err);
         }

@@ -1,4 +1,4 @@
-export enum HistoryLogsAction {
+export enum DatabaseOperation {
     Insert = 'insert',
     Update = 'update',
     Delete = 'delete',

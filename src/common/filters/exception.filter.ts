@@ -1,8 +1,9 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { CustomError } from './types/CustomError.type';
+import { CustomError } from '../types/CustomError.type';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { logErrorToFile } from 'src/logger/error-logger';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -43,15 +44,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (!logDir) {
             console.log(error);
         } else {
-            if (!existsSync(logDir)) {
-                mkdirSync(logDir, { recursive: true });
-            }
-            const name = Date.now() + '';
-            try {
-                writeFileSync(join(logDir, name), JSON.stringify(error));
-            } catch (err) {
-                console.log(err, error);
-            }
+            logErrorToFile(error);
         }
     }
 }
