@@ -9,12 +9,14 @@ import { UpdateCategoryDto } from './DTOs/update-category.dto';
 import { CategoryFindFiltersDto } from './DTOs/category-find-filters.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class CategoriesService extends UtilsService<Category> {
     constructor(
         @InjectRepository(Category) private readonly _repository: Repository<Category>,
-        private context: ContextService,
+        private readonly context: ContextService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'CategoriesService');
     }
@@ -26,17 +28,35 @@ export class CategoriesService extends UtilsService<Category> {
 
     async create(dto: CreateCategoryDto): Promise<Category> {
         try {
-            if (await this.findByName(dto.name)) {
-                throw new ConflictException(`Ya existe una categoría con el nombre "${dto.name}"`);
-            }
+            const createCategory = async () => {
+                this.logs.setEntity(Category);
+                if (await this.findByName(dto.name)) {
+                    throw new ConflictException(
+                        `Ya existe una categoría con el nombre "${dto.name}"`,
+                    );
+                }
 
-            const category = new Category();
-            category.name = dto.name;
-            category.icon = dto.icon || null;
-            category.color = dto.color;
-            category.user = this.context.user;
+                const category = new Category();
+                category.name = dto.name;
+                category.icon = dto.icon || null;
+                category.color = dto.color;
+                category.user = this.context.user;
 
-            return await this.repository.save(category);
+                const savedCategory = await this.repository.save(category);
+                await this.logs.setNew(savedCategory.id);
+                return savedCategory;
+            };
+
+            return this.context.getEntityManager()
+                ? await createCategory()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createCategory();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -69,9 +89,26 @@ export class CategoriesService extends UtilsService<Category> {
 
     async update(id: number, dto: UpdateCategoryDto): Promise<Category> {
         try {
-            await this.findById(id);
-            await this.updateEntity(id, dto);
-            return await this.findById(id);
+            const updateCategory = async () => {
+                this.logs.setEntity(Category);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.updateEntity(id, dto, this.repository);
+                await this.logs.setNew(id);
+                await this.logs.save();
+                return await this.findById(id);
+            };
+
+            return this.context.getEntityManager()
+                ? await updateCategory()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateCategory();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('update', err);
         }
@@ -79,8 +116,24 @@ export class CategoriesService extends UtilsService<Category> {
 
     async delete(id: number): Promise<void> {
         try {
-            await this.findById(id);
-            await this.repository.delete({ id });
+            const deleteCategory = async () => {
+                this.logs.setEntity(Category);
+                await this.logs.setOld(id);
+                await this.findById(id);
+                await this.repository.delete({ id });
+                await this.logs.save();
+            };
+
+            return this.context.getEntityManager()
+                ? await deleteCategory()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await deleteCategory();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('delete', err);
         }

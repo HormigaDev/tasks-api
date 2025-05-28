@@ -14,6 +14,7 @@ import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UpdateSubtaskDto } from './DTOs/update-subtask.dto';
 import { TasksService } from '../tasks/tasks.service';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class SubtasksService extends UtilsService<Subtask> {
@@ -21,6 +22,7 @@ export class SubtasksService extends UtilsService<Subtask> {
         @InjectRepository(Subtask) private readonly _repository: Repository<Subtask>,
         private readonly context: ContextService,
         private readonly tasksService: TasksService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'SubtasksService');
     }
@@ -31,31 +33,43 @@ export class SubtasksService extends UtilsService<Subtask> {
     }
 
     async create(dto: CreateSubtaskDto): Promise<Subtask> {
+        const createSubtask = async () => {
+            this.logs.setEntity(Subtask);
+
+            const task = await this.tasksService.findById(dto.taskId);
+            await this.validateSubtasksPerTaskLimit(task.id);
+
+            const priority = await this.getPriority(dto.priority);
+
+            const subtask = new Subtask();
+            subtask.title = dto.title;
+            subtask.description = dto.description;
+            subtask.priority = priority;
+            subtask.status = TaskStatus.pending;
+            subtask.task = task;
+
+            await this.setTags(dto.tags, subtask);
+            await this.setAttachments(dto.attachments, subtask);
+
+            const savedSubtask = await this.repository.save(subtask);
+
+            await this.logs.setNew(savedSubtask.id);
+            await this.logs.save();
+
+            return savedSubtask;
+        };
+
         try {
-            return await this.repository.manager.transaction(async (manager) => {
-                try {
-                    this.context.setEntityManager(manager);
-                    const task = await this.tasksService.findById(dto.taskId);
-                    await this.validateSubtasksPerTaskLimit(task.id);
-
-                    const priority = await this.getPriority(dto.priority);
-                    const subtask = new Subtask();
-                    subtask.title = dto.title;
-                    subtask.description = dto.description;
-                    subtask.priority = priority;
-                    subtask.status = TaskStatus.pending;
-                    subtask.task = task;
-
-                    await this.setTags(dto.tags, subtask);
-                    await this.setAttachments(dto.attachments, subtask);
-
-                    return await manager.save(subtask);
-                } catch (error) {
-                    throw error;
-                } finally {
-                    this.context.releaseEntityManager();
-                }
-            });
+            return this.context.getEntityManager()
+                ? await createSubtask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createSubtask();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -124,76 +138,115 @@ export class SubtasksService extends UtilsService<Subtask> {
     }
 
     async update(id: number, dto: UpdateSubtaskDto): Promise<Subtask> {
-        try {
+        const execute = async () => {
             await this.findById(id);
-            return await this.repository.manager.transaction(async (manager) => {
-                try {
-                    this.context.setEntityManager(manager);
-                    let props: Record<string, any> = {};
-                    if (dto.title) props.title = dto.title;
-                    if (dto.description) props.description = dto.description;
-                    if (dto.priority) {
-                        const priority = await this.getPriority(dto.priority);
-                        props.priority = priority.id;
-                    }
 
-                    if (Object.keys(props).length === 0) {
-                        throw new BadRequestException(
-                            'Ningún dato informado para actualizar la tarea',
-                        );
-                    }
+            this.logs.setEntity(Subtask);
+            await this.logs.setOld(id);
 
-                    await this.repository
-                        .createQueryBuilder('subtask')
-                        .update()
-                        .set(props)
-                        .where('subtask.id = :id and subtask.task.id = :task', {
-                            id,
-                            task: dto.taskId,
-                        })
-                        .execute();
+            const props: Record<string, any> = {};
+            if (dto.title) props.title = dto.title;
+            if (dto.description) props.description = dto.description;
+            if (dto.priority) {
+                const priority = await this.getPriority(dto.priority);
+                props.priority = priority.id;
+            }
 
-                    return await this.findById(id);
-                } catch (error) {
-                    throw error;
-                } finally {
-                    this.context.releaseEntityManager();
-                }
-            });
+            if (Object.keys(props).length === 0) {
+                throw new BadRequestException('Ningún dato informado para actualizar la tarea');
+            }
+
+            await this.repository
+                .createQueryBuilder('subtask')
+                .update()
+                .set(props)
+                .where('subtask.id = :id and subtask.task.id = :task', {
+                    id,
+                    task: dto.taskId,
+                })
+                .execute();
+
+            await this.logs.setNew(id);
+            await this.logs.save();
+
+            return await this.findById(id);
+        };
+
+        try {
+            return this.context.getEntityManager()
+                ? await execute()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await execute();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('update', err);
         }
     }
 
     async setSubtaskStatus(id: number, status: TaskStatus): Promise<Subtask> {
-        try {
-            return await this.repository.manager.transaction(async (manager) => {
-                try {
-                    this.context.setEntityManager(manager);
-                    await this.findById(id);
-                    await this.repository
-                        .createQueryBuilder('subtask')
-                        .update()
-                        .set({ status })
-                        .where('subtask.id = :id', { id })
-                        .execute();
+        const updateSubtask = async () => {
+            await this.findById(id);
 
-                    return await this.findById(id);
-                } catch (error) {
-                    throw error;
-                } finally {
-                    this.context.releaseEntityManager();
-                }
-            });
+            this.logs.setEntity(Subtask);
+            await this.logs.setOld(id);
+
+            await this.repository
+                .createQueryBuilder('subtask')
+                .update()
+                .set({ status })
+                .where('subtask.id = :id', { id })
+                .execute();
+
+            await this.logs.setNew(id);
+            await this.logs.save();
+
+            return await this.findById(id);
+        };
+
+        try {
+            return this.context.getEntityManager()
+                ? await updateSubtask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateSubtask();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('setSubtaskStatus', err);
         }
     }
 
     async delete(id: number): Promise<void> {
-        try {
+        const deleteSubtask = async () => {
             await this.findById(id);
+
+            this.logs.setEntity(Subtask);
+            await this.logs.setOld(id);
+
             await this.repository.delete(id);
+
+            await this.logs.save();
+        };
+
+        try {
+            return this.context.getEntityManager()
+                ? await deleteSubtask()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          await deleteSubtask();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('delete', err);
         }

@@ -21,7 +21,10 @@ import { CreateCommentDto } from '../comments/DTOs/create-comment.dto';
 import { RequirePermissions } from 'src/common/decorators/require-permissions.decorator';
 import { Permissions } from 'src/common/enums/Permissions.enum';
 import { EditCommentDto } from '../comments/DTOs/edit-comment.dto';
+import { UseFilters } from '@nestjs/common';
+import { WsAllExceptionsFilter } from 'src/common/filters/ws-exception.filter';
 
+@UseFilters(WsAllExceptionsFilter)
 @WebSocketGateway({
     path: '/ws',
     transport: ['websocket'],

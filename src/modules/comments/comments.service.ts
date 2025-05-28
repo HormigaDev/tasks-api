@@ -13,12 +13,14 @@ import { ContextService } from '../context/context.service';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { CommentFindFilters } from './DTOs/comment-find-filters.dto';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class CommentsService extends UtilsService<Comment> {
     constructor(
         @InjectRepository(Comment) private readonly _repository: Repository<Comment>,
         private readonly context: ContextService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'CommentsService');
     }
@@ -30,11 +32,13 @@ export class CommentsService extends UtilsService<Comment> {
 
     async create(dto: CreateCommentDto): Promise<Comment> {
         try {
-            return await this.repository.manager.transaction(async (manager) => {
+            const createComment = async () => {
                 const comment = new Comment();
                 if (!dto.user?.id) {
                     throw new WsException('Usuario no informado en el comentario');
                 }
+
+                const manager = this.context.getEntityManager();
 
                 const tasksRepository = manager.getRepository(Task);
                 const task = await tasksRepository.findOneBy({
@@ -76,8 +80,21 @@ export class CommentsService extends UtilsService<Comment> {
                     .of(dto.taskId)
                     .add(savedComment);
 
+                await this.logs.setNew(savedComment.id);
+                await this.logs.save();
+
                 return savedComment;
-            });
+            };
+            return this.context.getEntityManager()
+                ? await createComment()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createComment();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -111,8 +128,10 @@ export class CommentsService extends UtilsService<Comment> {
 
     async edit(dto: EditCommentDto): Promise<Comment> {
         try {
-            return await this.repository.manager.transaction(async (manager) => {
-                const commentRepo = manager.getRepository(Comment);
+            const editComment = async () => {
+                this.logs.setEntity(Comment);
+                await this.logs.setOld(dto.id);
+                const commentRepo = this.context.getEntityManager().getRepository(Comment);
 
                 const comment = await commentRepo.findOne({
                     where: { id: dto.id, user: dto.user },
@@ -126,8 +145,21 @@ export class CommentsService extends UtilsService<Comment> {
                 comment.content = dto.content;
                 comment.edited = true;
 
-                return await manager.save(comment);
-            });
+                const editedComment = await this.context.getEntityManager().save(comment);
+                await this.logs.setNew(editedComment.id);
+                await this.logs.save();
+                return editedComment;
+            };
+            return this.context.getEntityManager()
+                ? await editComment()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await editComment();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('edit', err);
         }
@@ -135,8 +167,24 @@ export class CommentsService extends UtilsService<Comment> {
 
     async delete(id: number, user: User): Promise<void> {
         try {
-            await this.findById(id, user);
-            await this.repository.delete(id);
+            const deleteComment = async () => {
+                this.logs.setEntity(Comment);
+                await this.findById(id, user);
+                await this.logs.setOld(id);
+                await this.repository.delete(id);
+                await this.logs.save();
+            };
+
+            return this.context.getEntityManager()
+                ? await deleteComment()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await deleteComment();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('delete', err);
         }

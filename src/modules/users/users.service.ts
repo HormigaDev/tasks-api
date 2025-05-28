@@ -18,6 +18,8 @@ import { UserStatus } from 'src/database/model/entities/user-status.entity';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UserFindFilters } from './DTOs/user-find-filters.dto';
 import { ContextService } from '../context/context.service';
+import { LogsService } from '../logs/logs.service';
+import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 
 @Injectable()
 export class UsersService extends UtilsService<User> {
@@ -26,6 +28,7 @@ export class UsersService extends UtilsService<User> {
         private readonly _repository: Repository<User>,
         private readonly authService: AuthService,
         private readonly context: ContextService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'UsersService');
     }
@@ -125,7 +128,8 @@ export class UsersService extends UtilsService<User> {
 
     async create(dto: CreateUserDto): Promise<User> {
         try {
-            return await this.repository.manager.transaction(async (manager) => {
+            const createUser = async () => {
+                this.logs.setEntity(User);
                 await this.existsUserByEmail(dto.email);
                 const user = new User();
 
@@ -134,7 +138,12 @@ export class UsersService extends UtilsService<User> {
                 user.password = await this.authService.hashPassword(dto.password);
                 user.status = UserStatus.active;
 
+                const manager = this.context.getEntityManager();
+
                 const savedUser = await manager.save(User, user);
+                if (dto.roles.length >= savedUser.limits.maxRoles) {
+                    throw new TooManyRequestsException('Límite de roles por usuario alcanzado');
+                }
                 const roles = await manager.find(Role, {
                     where: { id: In(dto.roles) },
                 });
@@ -144,8 +153,21 @@ export class UsersService extends UtilsService<User> {
                 }
 
                 savedUser.roles = roles;
+                await this.logs.setNew(savedUser.id);
+                await this.logs.save();
                 return await manager.save(savedUser);
-            });
+            };
+
+            return this.context.getEntityManager()
+                ? await createUser()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createUser();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -153,10 +175,27 @@ export class UsersService extends UtilsService<User> {
 
     async update(id: number, dto: UpdateUserDto): Promise<User> {
         try {
-            await this.validateStatus(id);
-            await this.findById(id);
-            await this.updateEntity(id, dto);
-            return await this.findById(id);
+            const updateUser = async () => {
+                this.logs.setEntity(User);
+                await this.validateStatus(id);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.updateEntity(id, dto, this.repository);
+                await this.logs.setNew(id);
+                await this.logs.save();
+                return await this.findById(id);
+            };
+
+            return this.context.getEntityManager()
+                ? await updateUser()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateUser();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('update', err);
         }
@@ -164,24 +203,45 @@ export class UsersService extends UtilsService<User> {
 
     async updateUserRoles(id: number, roles: number[]): Promise<User> {
         try {
-            await this.validateStatus(id);
-            await this.findById(id);
-            const newRoles = await this.repository.manager.find(Role, {
-                where: { id: In(roles) },
-            });
+            const updateUser = async () => {
+                this.logs.setEntity(User);
+                await this.validateStatus(id);
+                const user = await this.findById(id, { includeRoles: true });
+                if (roles.length >= user.limits.maxRoles) {
+                    throw new TooManyRequestsException('Límite de roles por usuario alcanzado');
+                }
+                await this.logs.setOld(user.id, { roles: user.roles.map((r) => r.id) });
+                const newRoles = await this.repository.manager.find(Role, {
+                    where: { id: In(roles) },
+                });
 
-            if (newRoles.length !== roles.length) {
-                throw new BadRequestException('Uno o más roles no existen');
-            }
+                if (newRoles.length !== roles.length) {
+                    throw new BadRequestException('Uno o más roles no existen');
+                }
 
-            await this.repository
-                .createQueryBuilder()
-                .update()
-                .set({ roles: newRoles })
-                .where('id = :id', { id })
-                .execute();
+                await this.repository
+                    .createQueryBuilder()
+                    .update()
+                    .set({ roles: newRoles })
+                    .where('id = :id', { id })
+                    .execute();
 
-            return await this.findById(id, { includeRoles: true });
+                await this.logs.setNew(user.id, { roles: newRoles.map((r) => r.id) });
+                await this.logs.save();
+
+                return await this.findById(id, { includeRoles: true });
+            };
+
+            return this.context.getEntityManager()
+                ? await updateUser()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateUser();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('updateUserRoles', err);
         }
@@ -197,29 +257,64 @@ export class UsersService extends UtilsService<User> {
 
     async setUserPassword(id: number, password: string): Promise<void> {
         try {
-            await this.validateStatus(id);
-            await this.repository
-                .createQueryBuilder()
-                .update()
-                .set({ password: await this.authService.hashPassword(password) })
-                .where('id = :id', { id })
-                .execute();
+            const updateUser = async () => {
+                this.logs.setEntity(User);
+                await this.validateStatus(id);
+                await this.logs.setOld(id, { password: 'Old Password' });
+                await this.repository
+                    .createQueryBuilder()
+                    .update()
+                    .set({ password: await this.authService.hashPassword(password) })
+                    .where('id = :id', { id })
+                    .execute();
+                await this.logs.setNew(id, { password: 'New Password' });
+                await this.logs.save();
+            };
+
+            return this.context.getEntityManager()
+                ? await updateUser()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateUser();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('setUserPassword', err);
         }
     }
 
     async setUserStatus(id: number, status: UserStatus) {
-        const user = await this.validateStatus(id);
-        await this.repository
-            .createQueryBuilder()
-            .update()
-            .set({ status })
-            .where('id = :id', { id })
-            .execute();
+        const updateUser = async () => {
+            this.logs.setEntity(User);
+            const user = await this.validateStatus(id);
+            await this.logs.setOld(id);
+            await this.repository
+                .createQueryBuilder()
+                .update()
+                .set({ status })
+                .where('id = :id', { id })
+                .execute();
 
-        user.status = status;
-        return user;
+            user.status = status;
+
+            await this.logs.setNew(id);
+            await this.logs.save();
+            return user;
+        };
+
+        return this.context.getEntityManager()
+            ? await updateUser()
+            : await this.repository.manager.transaction(async (manager) => {
+                  try {
+                      this.context.setEntityManager(manager);
+                      return await updateUser();
+                  } finally {
+                      this.context.releaseEntityManager();
+                  }
+              });
     }
 
     private async validateStatus(id: number) {

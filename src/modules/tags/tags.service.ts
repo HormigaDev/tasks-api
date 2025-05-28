@@ -9,6 +9,7 @@ import { TagFindFiltersDto } from './DTOs/tag-find-filters.dto';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { UpdateTagDto } from './DTOs/update-tag.dto';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class TagsService extends UtilsService<Tag> {
@@ -16,6 +17,7 @@ export class TagsService extends UtilsService<Tag> {
         @InjectRepository(Tag)
         private readonly _repository: Repository<Tag>,
         private readonly context: ContextService,
+        private readonly logs: LogsService,
     ) {
         super(_repository, 'TagsService');
     }
@@ -27,15 +29,38 @@ export class TagsService extends UtilsService<Tag> {
 
     async create(dto: CreateTagDto): Promise<Tag> {
         try {
-            if (await this.findByName(dto.name)) {
-                throw new ConflictException(`Ya existe una etiqueta con el nombre "${dto.name}"`);
-            }
-            const tag = new Tag();
-            tag.name = dto.name;
-            tag.user = this.context.user;
-            tag.color = dto.color;
+            const createTag = async () => {
+                this.logs.setEntity(Tag);
 
-            return await this.repository.save(tag);
+                if (await this.findByName(dto.name)) {
+                    throw new ConflictException(
+                        `Ya existe una etiqueta con el nombre "${dto.name}"`,
+                    );
+                }
+
+                const tag = new Tag();
+                tag.name = dto.name;
+                tag.user = this.context.user;
+                tag.color = dto.color;
+
+                const savedTag = await this.repository.save(tag);
+
+                await this.logs.setNew(savedTag.id);
+                await this.logs.save();
+
+                return savedTag;
+            };
+
+            return this.context.getEntityManager()
+                ? await createTag()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await createTag();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('create', err);
         }
@@ -81,9 +106,26 @@ export class TagsService extends UtilsService<Tag> {
 
     async update(id: number, dto: UpdateTagDto): Promise<Tag> {
         try {
-            await this.findById(id);
-            await this.updateEntity(id, dto);
-            return await this.findById(id);
+            const updateTag = async () => {
+                this.logs.setEntity(Tag);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.updateEntity(id, dto, this.repository);
+                await this.logs.setNew(id);
+                await this.logs.save();
+                return await this.findById(id);
+            };
+
+            return this.context.getEntityManager()
+                ? await updateTag()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await updateTag();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('update', err);
         }
@@ -91,8 +133,24 @@ export class TagsService extends UtilsService<Tag> {
 
     async delete(id: number): Promise<void> {
         try {
-            await this.findById(id);
-            await this.repository.delete(id);
+            const deleteTag = async () => {
+                this.logs.setEntity(Tag);
+                await this.findById(id);
+                await this.logs.setOld(id);
+                await this.repository.delete(id);
+                await this.logs.save();
+            };
+
+            return this.context.getEntityManager()
+                ? await deleteTag()
+                : await this.repository.manager.transaction(async (manager) => {
+                      try {
+                          this.context.setEntityManager(manager);
+                          return await deleteTag();
+                      } finally {
+                          this.context.releaseEntityManager();
+                      }
+                  });
         } catch (err) {
             this.handleError('delete', err);
         }
