@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Attachment } from 'src/database/model/entities/attachment.entity';
 import { AttachmentsController } from './attachments.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { join } from 'path';
 import { STORAGE_CLIENT_TOKEN } from './gRPC/storage-client';
 
 @Module({
@@ -16,7 +15,7 @@ import { STORAGE_CLIENT_TOKEN } from './gRPC/storage-client';
                 transport: Transport.GRPC,
                 options: {
                     package: 'storage',
-                    protoPath: join(__dirname, './gRPC/proto/storage.proto'),
+                    protoPath: process.env.GRPC_PROTO_FILE,
                     url: process.env.STORAGE_GRPC_URL || 'localhost:50051',
                 },
             },
