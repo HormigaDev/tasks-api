@@ -45,7 +45,6 @@ export class AttachmentsService extends UtilsService<Attachment> {
                 } while (await this.repository.exists({ where: { name: uuid, user } }));
 
                 const filename = `${uuid}${fileExtension}`;
-                console.log(this.gRPC);
                 const response: SaveFileResponse = await firstValueFrom(
                     this.gRPC.saveFile({
                         userId: `${user.id}`,

@@ -103,7 +103,7 @@ export class UsersService extends UtilsService<User> {
                     return (BigInt(role.permissions) & Permissions.Admin) === Permissions.Admin;
                 });
                 user.isAdmin = isAdmin;
-                user.computePermissions();
+                user.setPermissions();
             }
             return user;
         } catch (err) {

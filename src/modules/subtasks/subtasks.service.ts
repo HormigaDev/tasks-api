@@ -15,7 +15,6 @@ import { UpdateSubtaskDto } from './DTOs/update-subtask.dto';
 import { TasksService } from '../tasks/tasks.service';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 import { LogsService } from '../logs/logs.service';
-import { Task } from 'src/database/model/entities/task.entity';
 
 @Injectable()
 export class SubtasksService extends UtilsService<Subtask> {

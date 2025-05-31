@@ -15,7 +15,7 @@ message SaveFileRequest {
 }
 
 message SaveFileResponse {
-  bool success = 1; 
+  bool success = 1;
   string message = 2;
   string stored_path = 3;
 }

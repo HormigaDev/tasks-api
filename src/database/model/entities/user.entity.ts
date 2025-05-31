@@ -58,7 +58,7 @@ export class User {
     isAdmin: boolean;
     permissions: bigint;
 
-    computePermissions() {
+    setPermissions() {
         let combinedPermissions = 0n;
         this.roles?.forEach((role) => {
             combinedPermissions |= BigInt(role.permissions);

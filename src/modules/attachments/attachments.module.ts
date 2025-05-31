@@ -17,7 +17,7 @@ import { join } from 'path';
                 options: {
                     package: 'storage',
                     protoPath: join(__dirname, 'gRPC/proto/storage.proto'),
-                    url: process.env.STORAGE_GRPC_URL || '[::1]:50051',
+                    url: process.env.STORAGE_GRPC_URL,
                 },
             },
         ]),

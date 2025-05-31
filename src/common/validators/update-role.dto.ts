@@ -1,4 +1,6 @@
-import { IsOptional, IsString, IsNumber, Length } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsNumber, Length, Validate } from 'class-validator';
+import { IsBigInt } from './is-big-int.dto';
 
 export class UpdateRoleDto {
     @IsOptional()
@@ -7,9 +9,7 @@ export class UpdateRoleDto {
     readonly name?: string;
 
     @IsOptional()
-    @IsNumber(
-        { maxDecimalPlaces: 0 },
-        { message: 'Los permisos deben ser un numero entero válido.' },
-    )
-    readonly permissions?: number;
+    @Transform(({ value }) => BigInt(value))
+    @Validate(IsBigInt)
+    readonly permissions?: bigint;
 }
