@@ -27,7 +27,7 @@ export class StorageGrpcService implements OnModuleInit {
         private readonly client: ClientGrpc,
     ) {}
 
-    async onModuleInit() {
+    onModuleInit() {
         this.storageService = this.client.getService<StorageServiceGrpcClient>('StorageService');
     }
 

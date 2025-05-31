@@ -30,8 +30,8 @@ function wait_for_service() {
     exit 1
 }
 
-cp ./bin/r-backups /bin/r-backups
-chmod +x /bin/r-backups
+chmod +x ./bin/r-backups
+chmod +x ./bin/r-perms
 
 wait_for_service "bbel-postgres" 5432
 
