@@ -30,9 +30,11 @@ export class Subtask {
     description: string;
 
     @ManyToOne(() => TaskStatus, { nullable: false, eager: true })
+    @JoinColumn({ name: 'status_id' })
     status: TaskStatus;
 
     @ManyToOne(() => Priority, { nullable: false, eager: true })
+    @JoinColumn({ name: 'priority_id' })
     priority: Priority;
 
     @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -43,6 +45,7 @@ export class Subtask {
 
     @ManyToMany(() => Tag)
     @JoinTable({
+        name: 'subtask_tags',
         joinColumn: {
             name: 'subtask_id',
             referencedColumnName: 'id',
@@ -56,6 +59,7 @@ export class Subtask {
 
     @ManyToMany(() => Comment)
     @JoinTable({
+        name: 'subtask_comments',
         joinColumn: {
             name: 'subtask_id',
             referencedColumnName: 'id',
@@ -69,6 +73,7 @@ export class Subtask {
 
     @ManyToMany(() => Attachment)
     @JoinTable({
+        name: 'subtask_attachments',
         joinColumn: {
             name: 'subtask_id',
             referencedColumnName: 'id',

@@ -57,6 +57,7 @@ export class Task {
 
     @ManyToMany(() => Tag, { cascade: true })
     @JoinTable({
+        name: 'task_tags',
         joinColumn: {
             name: 'task_id',
             referencedColumnName: 'id',
@@ -70,6 +71,7 @@ export class Task {
 
     @ManyToMany(() => Comment, { cascade: true })
     @JoinTable({
+        name: 'task_comments',
         joinColumn: {
             name: 'task_id',
             referencedColumnName: 'id',
@@ -83,6 +85,7 @@ export class Task {
 
     @ManyToMany(() => Attachment, { cascade: true })
     @JoinTable({
+        name: 'task_attachments',
         joinColumn: {
             name: 'task_id',
             referencedColumnName: 'id',

@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { ContextService } from '../context/context.service';
 import { CustomError } from 'src/common/types/CustomError.type';
 import { DatabaseOperation } from 'src/common/enums/DatabaseOperation.enum';
-import equal from 'fast-deep-equal';
+import * as equal from 'fast-deep-equal';
 
 @Injectable({ scope: Scope.REQUEST })
 export class LogsService extends UtilsService<HistoryLog> {

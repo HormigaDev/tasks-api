@@ -20,6 +20,8 @@ import { UserFindFilters } from './DTOs/user-find-filters.dto';
 import { ContextService } from '../context/context.service';
 import { LogsService } from '../logs/logs.service';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
+import { UserLimits } from 'src/database/model/entities/user-limit.entity';
+import { UserFindOptions } from './DTOs/user-find-options.dto';
 
 @Injectable()
 export class UsersService extends UtilsService<User> {
@@ -50,15 +52,8 @@ export class UsersService extends UtilsService<User> {
 
             let query = this.repository
                 .createQueryBuilder('user')
-                .select([
-                    'user.id',
-                    'user.email',
-                    'user.name',
-                    'user.status',
-                    'user.createdAt',
-                    'user.lastUpdate',
-                ])
-                .leftJoinAndSelect('user.roles', 'role')
+                .select(['user.id', 'user.email', 'user.name', 'user.createdAt', 'user.updatedAt'])
+                .leftJoinAndSelect('user.status', 'st')
                 .where('user.status.id in (:...status)', { status });
 
             query = this.setPagination(query, filters.pagination).orderBy(
@@ -76,28 +71,39 @@ export class UsersService extends UtilsService<User> {
         }
     }
 
-    async findById(id: number, { includeRoles } = { includeRoles: false }): Promise<User> {
+    async findById(id: number, options: UserFindOptions = new UserFindOptions()): Promise<User> {
         try {
-            let query = this.repository
+            const query = this.repository
                 .createQueryBuilder('user')
                 .where('user.id = :id', { id })
                 .andWhere('user.status.id in (:...status)', {
                     status: [UserStatus.Active, UserStatus.Inactive, UserStatus.Blocked],
-                });
+                })
+                .addSelect('coalesce(bit_or(role.permissions), 0)', 'permissions');
 
-            if (includeRoles) {
-                query = query.leftJoinAndSelect('user.roles', 'role');
+            if (options.includeRoles) {
+                query.leftJoinAndSelect('user.roles', 'role');
+            } else {
+                query.leftJoin('user.roles', 'role');
             }
+            query
+                .leftJoinAndSelect('user.limits', 'limits')
+                .leftJoinAndSelect('user.status', 'status')
+                .groupBy('user.id')
+                .addGroupBy('status.id')
+                .addGroupBy('role.id')
+                .addGroupBy('limits.id');
 
             const user = await query.getOne();
             if (!user) {
                 throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
             }
-            if (includeRoles) {
+            if (options.includeRoles) {
                 const isAdmin = user.roles.some((role) => {
-                    return (role.permissions & Permissions.Admin) === Permissions.Admin;
+                    return (BigInt(role.permissions) & Permissions.Admin) === Permissions.Admin;
                 });
                 user.isAdmin = isAdmin;
+                user.computePermissions();
             }
             return user;
         } catch (err) {
@@ -108,7 +114,9 @@ export class UsersService extends UtilsService<User> {
     async findOneByEmail(email: string): Promise<User> {
         try {
             const user = await this.repository.findOneBy({ email });
-            await this.validateStatus(user.id);
+            if (user) {
+                await this.validateStatus(user.id);
+            }
             return user;
         } catch (err) {
             this.handleError('findOneByEmail', err);
@@ -140,7 +148,12 @@ export class UsersService extends UtilsService<User> {
 
                 const manager = this.context.getEntityManager();
 
-                const savedUser = await manager.save(User, user);
+                const savedUser = await manager.save(user);
+                const limits = new UserLimits();
+                limits.user = savedUser;
+                const savedLimits = await manager.save(limits);
+                savedUser.limits = savedLimits;
+
                 if (dto.roles.length >= savedUser.limits.maxRoles) {
                     throw new TooManyRequestsException('Límite de roles por usuario alcanzado');
                 }
@@ -153,9 +166,13 @@ export class UsersService extends UtilsService<User> {
                 }
 
                 savedUser.roles = roles;
+
+                await manager.createQueryBuilder().relation(User, 'roles').of(savedUser).add(roles);
+
+                delete savedUser.password;
                 await this.logs.setNew(savedUser.id);
                 await this.logs.save();
-                return await manager.save(savedUser);
+                return await this.findById(savedUser.id);
             };
 
             return this.context.getEntityManager()
@@ -317,8 +334,14 @@ export class UsersService extends UtilsService<User> {
               });
     }
 
-    private async validateStatus(id: number) {
-        const user = await this.findById(id);
+    private async validateStatus(id: number | User) {
+        let user: User;
+        if (id instanceof User) {
+            user = user;
+        } else {
+            user = await this.findById(id);
+        }
+
         switch (user.status.id) {
             case UserStatus.Active:
                 return user;

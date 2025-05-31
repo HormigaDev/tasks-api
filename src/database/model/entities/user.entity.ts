@@ -7,6 +7,7 @@ import {
     AfterLoad,
     ManyToOne,
     OneToMany,
+    JoinColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { UserStatus } from './user-status.entity';
@@ -28,6 +29,7 @@ export class User {
     password: string;
 
     @ManyToOne(() => UserStatus, { nullable: false, eager: true })
+    @JoinColumn({ name: 'status_id' })
     status: UserStatus;
 
     @OneToMany(() => UserLimits, (userLimits) => userLimits.user, { eager: true })
@@ -36,8 +38,8 @@ export class User {
     @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
-    @Column({ name: 'last_update', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    lastUpdate: Date;
+    @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    updatedAt: Date;
 
     @ManyToMany(() => Role, (role) => role.users, { onDelete: 'CASCADE' })
     @JoinTable({
@@ -54,19 +56,18 @@ export class User {
     roles: Role[];
 
     isAdmin: boolean;
-    permissions: number;
+    permissions: bigint;
 
-    @AfterLoad()
-    computePermissios() {
-        let combinedPermissions = 0;
+    computePermissions() {
+        let combinedPermissions = 0n;
         this.roles?.forEach((role) => {
-            combinedPermissions |= role.permissions;
+            combinedPermissions |= BigInt(role.permissions);
         });
 
         this.permissions = combinedPermissions;
     }
-    hasPermission(permission: Permissions) {
+    hasPermission(permission: bigint) {
         if (!this.permissions) return false;
-        return (this.permissions & permission) === permission;
+        return (BigInt(this.permissions) & BigInt(permission)) === BigInt(permission);
     }
 }

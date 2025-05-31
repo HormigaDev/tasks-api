@@ -143,10 +143,13 @@ export class TasksService extends UtilsService<Task> {
 
     async findById(id: number): Promise<Task> {
         try {
-            const task = await this.repository.findOne({
-                where: { id, user: this.context.user },
-                relations: ['tags', 'milestones', 'attachments'],
-            });
+            const task = await this.repository
+                .createQueryBuilder('t')
+                .innerJoin('t.user', 'user')
+                .leftJoinAndSelect('t.tags', 'tag')
+                .leftJoinAndSelect('t.attachments', 'a')
+                .where('t.id = :id and user.id = :user', { id, user: this.context.user.id })
+                .getOne();
 
             if (!task) {
                 throw new NotFoundException(`Tarea con el ID "${id}" no encontrada`);
@@ -176,7 +179,6 @@ export class TasksService extends UtilsService<Task> {
                 .leftJoinAndSelect('task.priority', 'priority')
                 .leftJoinAndSelect('task.tags', 'tags')
                 .leftJoinAndSelect('task.attachments', 'attachments')
-                .leftJoinAndSelect('task.milestones', 'milestones')
                 .getManyAndCount();
         } catch (err) {
             this.handleError('find', err);

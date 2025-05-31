@@ -49,6 +49,7 @@ export class UsersController {
     async getInfo(@Req() req: Request) {
         const userId: number = req['user']['userId'];
         const user = await this.service.findById(userId, { includeRoles: true });
+        user.permissions = String(user.permissions) as unknown as bigint;
         delete user.password;
         return { user };
     }
@@ -58,6 +59,7 @@ export class UsersController {
     @RequirePermissions([Permissions.ReadUsers])
     async getUserInfo(@Param('id', IdPipe) id: number) {
         const user = await this.service.findById(id, { includeRoles: true });
+        user.permissions = String(user.permissions) as unknown as bigint;
         delete user.password;
         return { user };
     }

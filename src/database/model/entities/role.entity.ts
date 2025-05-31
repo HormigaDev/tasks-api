@@ -9,8 +9,8 @@ export class Role {
     @Column({ type: 'varchar', length: 100, nullable: false, unique: true })
     name: string;
 
-    @Column({ type: 'integer' })
-    permissions: number;
+    @Column({ type: 'bigint' })
+    permissions: bigint;
 
     @ManyToMany(() => User, (user) => user.roles)
     users: User[];

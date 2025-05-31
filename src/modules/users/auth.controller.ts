@@ -66,7 +66,7 @@ export class AuthController {
                 });
                 return res.status(200).send({ message: 'Authentication successful' });
             } else {
-                return { token };
+                return res.status(200).json({ token });
             }
         } else {
             await this.cacheManager.set(cacheKey, failedAttempts + 1, this.BLOCK_TIME);

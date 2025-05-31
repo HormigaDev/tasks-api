@@ -1,15 +1,7 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Length, MinLength } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Length, MinLength } from 'class-validator';
 
 export class UpdateSubtaskDto {
-    @IsNotEmpty({ message: 'El id de la tarea es obligatorio' })
-    @Transform(({ value }) => Number(value))
-    @IsNumber(
-        { allowNaN: false, maxDecimalPlaces: 0 },
-        { message: 'El id de la tarea debe ser un número válido' },
-    )
-    taskId: number;
-
     @IsOptional()
     @IsString({ message: 'El título de la subtarea debe ser un texto válido' })
     @Length(3, 100, { message: 'El título de la subtarea debe tener entre 3 y 100 caracteres' })

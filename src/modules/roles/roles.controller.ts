@@ -5,8 +5,8 @@ import {
     Get,
     HttpCode,
     Param,
+    Patch,
     Post,
-    Put,
     Query,
     Req,
     UseGuards,
@@ -40,7 +40,9 @@ export class RolesController {
         const userId: number = req['user']['userId'];
         const user = await this.usersService.findById(userId, { includeRoles: true });
         const permissions = PermissionsDict.filter((perm) => {
-            return (user.permissions & perm.id) === perm.id;
+            perm.id = String(perm.id) as unknown as bigint;
+            const isAdmin = user.hasPermission(Permissions.Admin);
+            return isAdmin || (BigInt(user.permissions) & BigInt(perm.id)) === BigInt(perm.id);
         });
 
         return { permissions };
@@ -59,16 +61,17 @@ export class RolesController {
     @RequirePermissions([Permissions.CreateRoles])
     async createRole(@Body() body: CreateRoleDto) {
         const role = await this.service.create(body);
+        role.permissions = String(role.permissions) as unknown as bigint;
         return { role };
     }
 
-    @Put('/:id')
-    @HttpCode(204)
+    @Patch('/:id')
+    @HttpCode(200)
     @RequirePermissions([Permissions.UpdateRoles])
     async updateRole(@Body() body: UpdateRoleDto, @Param('id', IdPipe) id: number) {
         await this.service.findOne(id);
         await this.service.update(id, body);
-        return {};
+        return { message: 'Rol actualizaco con éxito' };
     }
 
     @Delete('/:id')

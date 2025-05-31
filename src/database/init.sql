@@ -16,18 +16,31 @@ create table if not exists users (
     name varchar(255) not null,
     password varchar(255) not null,
     status_id integer not null,
+    password_algorithm varchar(50) default 'bcrypt',
     created_at timestamp default CURRENT_TIMESTAMP,
     updated_at timestamp default CURRENT_TIMESTAMP,
     deleted_at timestamp,
     foreign key (status_id) references user_status (id)
 );
 
+insert into users(id, name, email, password, status_id)
+select 1, 'ADMIN', 'admin@admin.com', 'fake_password', 1
+where not exists (
+    select 1 from users where id = 1 or email = 'admin@admin.com'
+);
+
 create table if not exists roles (
     id serial primary key,
     name varchar(100) unique not null,
-    permissions integer,
+    permissions bigint,
     created_at timestamp default CURRENT_TIMESTAMP,
     updated_at timestamp default CURRENT_TIMESTAMP
+);
+
+insert into roles (id, name, permissions)
+select 1, 'ADMINISTRATOR', 16
+where not exists (
+    select 1 from roles where id = 1 or name = 'ADMINISTRATOR'
 );
 
 create table if not exists user_roles (
@@ -36,6 +49,15 @@ create table if not exists user_roles (
     primary key (user_id, role_id),
     foreign key (user_id) references users (id),
     foreign key (role_id) references roles (id) on delete cascade    
+);
+
+insert into user_roles(user_id, role_id)
+select 1, 1
+where exists (
+    select 1 from users where id = 1 and email = 'admin@admin.com'
+)
+and exists (
+    select 1 from roles where id = 1 and name = 'ADMINISTRATOR'
 );
 
 create table if not exists categories (

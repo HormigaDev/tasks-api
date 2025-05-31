@@ -10,13 +10,13 @@ export class CategoryFindFiltersDto {
 
     @IsNotEmpty({ message: 'El valor para ordenar es obligatorio' })
     @IsEnum(CategoryColumnOptions, { message: 'Valor para ordenar no admitido' })
-    orderBy: CategoryColumnOptions;
+    orderBy: CategoryColumnOptions = CategoryColumnOptions.Id;
 
     @IsNotEmpty({ message: 'El tipo de ordenación es obligatorio' })
     @IsIn(['ASC', 'DESC'], { message: 'El criterio de ordenación debe ser "ASC" o "DESC"' })
-    order: 'ASC' | 'DESC';
+    order: 'ASC' | 'DESC' = 'DESC';
 
     @Type(() => PaginationDto)
     @ValidateNested({ always: true })
-    pagination: PaginationDto;
+    pagination: PaginationDto = new PaginationDto();
 }

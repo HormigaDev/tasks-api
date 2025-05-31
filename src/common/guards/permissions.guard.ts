@@ -14,7 +14,7 @@ export class PermissionsGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const { permissions, optional } = this.reflector.get<{
-            permissions: number[];
+            permissions: bigint[];
             optional: boolean;
         }>(PERMISSION_KEY, context.getHandler()) || { permissions: [], optional: false };
         if (!permissions) {
@@ -33,13 +33,13 @@ export class PermissionsGuard implements CanActivate {
             throw new ForbiddenException('Usuario no activo.');
         }
 
-        if ((user.permissions & Permissions.Admin) === Permissions.Admin) {
+        if ((BigInt(user.permissions) & Permissions.Admin) === Permissions.Admin) {
             return true;
         }
         if (optional) {
             if (
                 permissions.some((perm) => {
-                    return (user.permissions & perm) === perm;
+                    return (BigInt(user.permissions) & perm) === perm;
                 })
             ) {
                 return true;
@@ -49,7 +49,7 @@ export class PermissionsGuard implements CanActivate {
         } else {
             if (
                 permissions.every((perm) => {
-                    return (user.permissions & perm) === perm;
+                    return (BigInt(user.permissions) & perm) === perm;
                 })
             ) {
                 return true;

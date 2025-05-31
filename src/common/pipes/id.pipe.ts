@@ -6,7 +6,9 @@ export class IdPipe implements PipeTransform {
         const id = parseInt(value, 10);
 
         if (isNaN(id) || id <= 0) {
-            throw new BadRequestException(`Invalid ID: "${value}" must be a positive number.`);
+            throw new BadRequestException(
+                `ID inválido: "${value}". El ID debe ser un número válido`,
+            );
         }
 
         return id;

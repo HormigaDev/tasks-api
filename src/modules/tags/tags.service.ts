@@ -77,7 +77,14 @@ export class TagsService extends UtilsService<Tag> {
 
     async findById(id: number): Promise<Tag> {
         try {
-            const tag = await this.repository.findOneBy({ id, user: this.context.user });
+            const tag = await this.repository
+                .createQueryBuilder('tag')
+                .leftJoin('tag.user', 'user')
+                .where('tag.id = :id and user.id = :user', {
+                    id,
+                    user: this.context.user.id,
+                })
+                .getOne();
             if (!tag) {
                 throw new NotFoundException(`No se encontró la etiqueta con el id "${id}"`);
             }

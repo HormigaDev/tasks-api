@@ -44,6 +44,7 @@ export class CategoriesService extends UtilsService<Category> {
 
                 const savedCategory = await this.repository.save(category);
                 await this.logs.setNew(savedCategory.id);
+                delete savedCategory.user;
                 return savedCategory;
             };
 
@@ -79,7 +80,11 @@ export class CategoriesService extends UtilsService<Category> {
     }
 
     async findById(id: number) {
-        const category = await this.repository.findOneBy({ id, user: this.context.user });
+        const category = await this.repository
+            .createQueryBuilder('cat')
+            .where('cat.id = :id and user.id = :user', { id, user: this.context.user.id })
+            .leftJoin('cat.user', 'user')
+            .getOne();
         if (!category) {
             throw new NotFoundException(`Categoría con ID "${id}" no encontrada`);
         }
@@ -91,7 +96,12 @@ export class CategoriesService extends UtilsService<Category> {
         try {
             const updateCategory = async () => {
                 this.logs.setEntity(Category);
-                await this.findById(id);
+                const category = await this.findById(id);
+                if (dto.name && category.name !== dto.name && (await this.findByName(dto.name))) {
+                    throw new ConflictException(
+                        `Ya existe una categoría con el nombre "${dto.name}"`,
+                    );
+                }
                 await this.logs.setOld(id);
                 await this.updateEntity(id, dto, this.repository);
                 await this.logs.setNew(id);
@@ -140,7 +150,14 @@ export class CategoriesService extends UtilsService<Category> {
     }
 
     async findByName(name: string) {
-        const category = await this.repository.findOneBy({ name, user: this.context.user });
+        const category = await this.repository
+            .createQueryBuilder('cat')
+            .where('user.id = :user and cat.name = :name', {
+                user: this.context.user.id,
+                name,
+            })
+            .leftJoin('cat.user', 'user')
+            .getOne();
         return category;
     }
 

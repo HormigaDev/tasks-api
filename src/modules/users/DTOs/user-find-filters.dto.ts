@@ -33,16 +33,16 @@ export class UserPropertySearch {
 export class UserFindFilters {
     @IsNotEmpty({ message: 'El criterio de ordenación es obligatorio' })
     @IsEnum(UserColumnOptions, { message: 'Criterio de ordenación no admitido' })
-    orderBy: UserColumnOptions;
+    orderBy: UserColumnOptions = UserColumnOptions.Id;
 
     @IsNotEmpty({ message: 'El tipo de ordenación es obligatorio' })
     @IsIn(['ASC', 'DESC'], { message: 'El tipo de ordenación debe ser "ASC" o "DESC"' })
-    order: 'ASC' | 'DESC';
+    order: 'ASC' | 'DESC' = 'DESC';
 
     @IsNotEmpty({ message: 'La paginación es obligatoria' })
     @Type(() => PaginationDto)
     @ValidateNested()
-    pagination: PaginationDto;
+    pagination: PaginationDto = new PaginationDto();
 
     @IsOptional()
     @Type(() => UserPropertySearch)

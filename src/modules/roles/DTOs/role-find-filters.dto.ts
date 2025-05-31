@@ -34,19 +34,19 @@ export class RoleFindQueryDto {
 export class RoleFindFilters {
     @IsNotEmpty({ message: 'El criterio de ordenación es obligatorio' })
     @IsEnum(RolesColumnOptions, { message: 'Criterio de ordenación no admitido' })
-    orderBy: RolesColumnOptions;
+    orderBy: RolesColumnOptions = RolesColumnOptions.Id;
 
     @IsNotEmpty({ message: 'El tipo de ordenación es obligatorio' })
     @IsString({ message: 'El tipo de ordenación debe ser un texto válido' })
     @IsIn(['ASC', 'DESC'], {
         message: 'El tipo de ordenación solo puede ser "ASC" o "DESC" (sensible a mayúsculas)',
     })
-    order: 'ASC' | 'DESC';
+    order: 'ASC' | 'DESC' = 'DESC';
 
     @IsNotEmpty({ message: 'La paginación es obligatoria' })
     @Type(() => PaginationDto)
     @ValidateNested()
-    pagination: PaginationDto;
+    pagination: PaginationDto = new PaginationDto();
 
     @IsOptional()
     @Type(() => RoleFindQueryDto)
