@@ -5,11 +5,13 @@ import * as jwt from 'jsonwebtoken';
 @Injectable()
 export class AuthService {
     async hashPassword(password: string): Promise<string> {
-        return bcrypt.hash(password, 10);
+        const envVarSaltRounds = parseInt(process.env.SALT_ROUNDS);
+        const saltRounds = !isNaN(envVarSaltRounds) ? envVarSaltRounds : 10;
+        return await bcrypt.hash(password, saltRounds);
     }
 
     async passwordIsEqual(password: string, passwordHash: string): Promise<boolean> {
-        return bcrypt.compare(password, passwordHash);
+        return await bcrypt.compare(password, passwordHash);
     }
 
     async generateToken(payload: any): Promise<string> {

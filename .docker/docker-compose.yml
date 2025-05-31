@@ -1,0 +1,17 @@
+services:
+    tasks-api:
+        container_name: bbel-tasks-api
+        build:
+            context: ../
+            dockerfile: .docker/Dockerfile
+        restart: always
+        networks:
+            - shared-network
+        ports:
+            - '${APP_PORT}:3000'
+        volumes:
+            - ..:/app
+
+networks:
+    shared-network:
+        external: true

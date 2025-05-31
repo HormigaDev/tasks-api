@@ -6,7 +6,6 @@ import { CommentsService } from './comments.service';
 import { RequirePermissions } from 'src/common/decorators/require-permissions.decorator';
 import { Permissions } from 'src/common/enums/Permissions.enum';
 import { CommentFindFilters } from './DTOs/comment-find-filters.dto';
-import { CreateCommentDto } from './DTOs/create-comment.dto';
 
 @Controller('comments')
 @UseGuards(JwtAuthGuard, UserStatusGuard, PermissionsGuard)

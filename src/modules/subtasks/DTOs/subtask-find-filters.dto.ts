@@ -41,16 +41,16 @@ export class SubtaskFindFilters {
 
     @IsNotEmpty({ message: 'El criterio de ordenación es obligatorio' })
     @IsEnum(SubtaskColumnOptions, { message: 'Criterio de ordenación no admitido' })
-    orderBy: SubtaskColumnOptions;
+    orderBy: SubtaskColumnOptions = SubtaskColumnOptions.Id;
 
     @IsNotEmpty({ message: 'El tipo de ordenación es obligatorio' })
     @IsIn(['ASC', 'DESC'], { message: 'El tipo de ordenación debe ser "ASC" o "DESC"' })
-    order: 'ASC' | 'DESC';
+    order: 'ASC' | 'DESC' = 'DESC';
 
     @IsNotEmpty({ message: 'La paginación es obligatoria' })
     @Type(() => PaginationDto)
     @ValidateNested()
-    pagination: PaginationDto;
+    pagination: PaginationDto = new PaginationDto();
 
     @IsOptional()
     @Type(() => SubtaskPropertySearch)

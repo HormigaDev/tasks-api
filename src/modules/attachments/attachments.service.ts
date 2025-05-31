@@ -22,7 +22,6 @@ export class AttachmentsService extends UtilsService<Attachment> {
     constructor(
         @InjectRepository(Attachment) private readonly _repository: Repository<Attachment>,
         private readonly context: ContextService,
-        @Inject(STORAGE_CLIENT_TOKEN)
         private readonly gRPC: StorageGrpcService,
         private readonly logs: LogsService,
     ) {
@@ -37,6 +36,7 @@ export class AttachmentsService extends UtilsService<Attachment> {
     async save(file: Express.Multer.File): Promise<Attachment> {
         try {
             const saveFile = async () => {
+                this.logs.setEntity(Attachment);
                 const user = this.context.user;
                 const fileExtension = extname(file.originalname);
                 let uuid: string;
@@ -45,7 +45,7 @@ export class AttachmentsService extends UtilsService<Attachment> {
                 } while (await this.repository.exists({ where: { name: uuid, user } }));
 
                 const filename = `${uuid}${fileExtension}`;
-
+                console.log(this.gRPC);
                 const response: SaveFileResponse = await firstValueFrom(
                     this.gRPC.saveFile({
                         userId: `${user.id}`,
@@ -70,6 +70,7 @@ export class AttachmentsService extends UtilsService<Attachment> {
                 const newAttachment = await this.repository.save(attachment);
                 await this.logs.setNew(newAttachment.id);
                 await this.logs.save();
+                delete newAttachment.user;
                 return newAttachment;
             };
 
@@ -132,7 +133,11 @@ export class AttachmentsService extends UtilsService<Attachment> {
 
     async findByName(name: string): Promise<Attachment> {
         try {
-            const attachment = await this.repository.findOneBy({ name, user: this.context.user });
+            const attachment = await this.repository
+                .createQueryBuilder('a')
+                .innerJoin('a.user', 'user')
+                .where('a.name = :name and user.id = :user', { name, user: this.context.user.id })
+                .getOne();
             if (!attachment) {
                 throw new NotFoundException('Archivo no encontrado');
             }
@@ -145,7 +150,11 @@ export class AttachmentsService extends UtilsService<Attachment> {
 
     async findById(id: number): Promise<Attachment> {
         try {
-            const attachment = await this.repository.findOneBy({ id, user: this.context.user });
+            const attachment = await this.repository
+                .createQueryBuilder('a')
+                .innerJoin('a.user', 'user')
+                .where('a.id = :id and user.id = :user', { id, user: this.context.user.id })
+                .getOne();
             if (!attachment) {
                 throw new NotFoundException('Archivo no encontrado');
             }

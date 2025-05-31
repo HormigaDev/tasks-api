@@ -1,60 +1,60 @@
 // Al actualizar los permisos aqui debe actualizarse su contraparte de JS en
 // dev/perms.js
 // Y también actualizar src/sql/db.sql
-export enum Permissions {
-    CreateUsers = 2 ** 0,
-    ReadUsers = 2 ** 1,
-    UpdateUsers = 2 ** 2,
-    DeleteUsers = 2 ** 3,
+export const Permissions = {
+    CreateUsers: 1n << 0n,
+    ReadUsers: 1n << 1n,
+    UpdateUsers: 1n << 2n,
+    DeleteUsers: 1n << 3n,
 
-    Admin = 2 ** 4,
+    Admin: 1n << 4n,
 
-    CreateRoles = 2 ** 5,
-    ReadRoles = 2 ** 6,
-    UpdateRoles = 2 ** 7,
-    DeleteRoles = 2 ** 8,
+    CreateRoles: 1n << 5n,
+    ReadRoles: 1n << 6n,
+    UpdateRoles: 1n << 7n,
+    DeleteRoles: 1n << 8n,
 
-    ManageUsers = 2 ** 9,
-    ManageRoles = 2 ** 10,
+    ManageUsers: 1n << 9n,
+    ManageRoles: 1n << 10n,
 
-    ReadMySelf = 2 ** 11,
-    UpdateMySelf = 2 ** 12,
-    DeleteMySelf = 2 ** 13,
+    ReadMySelf: 1n << 11n,
+    UpdateMySelf: 1n << 12n,
+    DeleteMySelf: 1n << 13n,
 
-    CreateCategories = 2 ** 14,
-    ReadCategories = 2 ** 15,
-    UpdateCategories = 2 ** 16,
-    DeleteCategories = 2 ** 17,
+    CreateCategories: 1n << 14n,
+    ReadCategories: 1n << 15n,
+    UpdateCategories: 1n << 16n,
+    DeleteCategories: 1n << 17n,
 
-    CreateTags = 2 ** 18,
-    ReadTags = 2 ** 19,
-    UpdateTags = 2 ** 20,
-    DeleteTags = 2 ** 21,
+    CreateTags: 1n << 18n,
+    ReadTags: 1n << 19n,
+    UpdateTags: 1n << 20n,
+    DeleteTags: 1n << 21n,
 
-    CreateTasks = 2 ** 22,
-    ReadTasks = 2 ** 23,
-    UpdateTasks = 2 ** 24,
-    DeleteTasks = 2 ** 25,
+    CreateTasks: 1n << 22n,
+    ReadTasks: 1n << 23n,
+    UpdateTasks: 1n << 24n,
+    DeleteTasks: 1n << 25n,
 
-    CreateSubtasks = 2 ** 26,
-    ReadSubtasks = 2 ** 27,
-    UpdateSubtasks = 2 ** 28,
-    DeleteSubtasks = 2 ** 29,
+    CreateSubtasks: 1n << 26n,
+    ReadSubtasks: 1n << 27n,
+    UpdateSubtasks: 1n << 28n,
+    DeleteSubtasks: 1n << 29n,
 
-    CreateMilestones = 2 ** 30,
-    ReadMilestones = 2 ** 31,
-    UpdateMilestones = 2 ** 32,
-    DeleteMilestones = 2 ** 33,
+    CreateMilestones: 1n << 30n,
+    ReadMilestones: 1n << 31n,
+    UpdateMilestones: 1n << 32n,
+    DeleteMilestones: 1n << 33n,
 
-    CreateComments = 2 ** 34,
-    ReadComments = 2 ** 35,
-    UpdateComments = 2 ** 36,
-    DeleteComments = 2 ** 37,
+    CreateComments: 1n << 34n,
+    ReadComments: 1n << 35n,
+    UpdateComments: 1n << 36n,
+    DeleteComments: 1n << 37n,
 
-    SaveAttachments = 2 ** 38,
-    ReadAttachments = 2 ** 39,
-    DeleteAttachments = 2 ** 40,
-}
+    SaveAttachments: 1n << 38n,
+    ReadAttachments: 1n << 39n,
+    DeleteAttachments: 1n << 40n,
+};
 
 export const PermissionsDict = [
     { id: Permissions.CreateUsers, name: 'Crear Usuarios' },

@@ -1,11 +1,9 @@
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CustomError } from '../types/CustomError.type';
 import { PaginationInterface } from '../interfaces/pagination.interface';
 import { PropertySearch } from '../interfaces/property-search.interface';
 import { SearchOperators } from '../enums/SearchOperators.enum';
-import { User } from 'src/database/model/entities/user.entity';
-import { ContextService } from 'src/modules/context/context.service';
 
 export class UtilsService<Entity> {
     private repo: Repository<Entity>;
@@ -22,7 +20,7 @@ export class UtilsService<Entity> {
         repository: Repository<Entity> = null,
     ) {
         const props: Record<string, any> = {};
-        for (const key in Object.keys(dto)) {
+        for (const key of Object.keys(dto)) {
             if (dto[key] !== undefined) {
                 props[key] = dto[key];
             }

@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsString, IsNumber, Length } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsString, IsNumber, Length, Validate } from 'class-validator';
+import { IsBigInt } from './is-big-int.dto';
 
 export class CreateRoleDto {
     @IsNotEmpty({ message: 'El nombre del rol es obligatorio.' })
@@ -7,9 +9,7 @@ export class CreateRoleDto {
     readonly name: string;
 
     @IsNotEmpty({ message: 'Los permisos son obligatorios.' })
-    @IsNumber(
-        { maxDecimalPlaces: 0 },
-        { message: 'Los permisos deben ser un numero entero válido.' },
-    )
-    readonly permissions: number;
+    @Transform(({ value }) => BigInt(value))
+    @Validate(IsBigInt)
+    readonly permissions: bigint;
 }

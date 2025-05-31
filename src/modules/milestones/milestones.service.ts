@@ -35,11 +35,13 @@ export class MilestonesService extends UtilsService<Milestone> {
                 milestone.description = dto.description;
                 milestone.expectedDate = dto.expectedDate || new Date();
                 milestone.completed = false;
+                milestone.user = this.context.user;
 
                 const savedMilestone = await this.repository.save(milestone);
                 await this.logs.setNew(savedMilestone.id);
                 await this.logs.save();
 
+                delete savedMilestone.user;
                 return savedMilestone;
             };
             return this.context.getEntityManager()
@@ -70,8 +72,9 @@ export class MilestonesService extends UtilsService<Milestone> {
                     'task.title',
                     'task.status',
                 ])
-                .innerJoin('m.tasks', 'task')
-                .where('m.id = :id', { id })
+                .leftJoin('m.tasks', 'task')
+                .leftJoin('m.user', 'user')
+                .where('m.id = :id and user.id = :user', { id, user: this.context.user.id })
                 .getOne();
 
             if (!milestone) {

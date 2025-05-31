@@ -33,16 +33,16 @@ export class MilestonePropertySearch {
 export class MilestoneFindFilters {
     @IsNotEmpty({ message: 'El criterio de ordenación es obligatorio' })
     @IsEnum(MilestoneColumnOptions, { message: 'Criterio de ordenación no admitido' })
-    orderBy: MilestoneColumnOptions;
+    orderBy: MilestoneColumnOptions = MilestoneColumnOptions.Id;
 
     @IsNotEmpty({ message: 'El tipo de ordenación es obligatorio' })
     @IsString({ message: 'El tipo de ordenación debe ser un texto válido' })
     @IsIn(['ASC', 'DESC'], { message: 'El tipo de ordenación debe ser "ASC" o "DESC"' })
-    order: 'ASC' | 'DESC';
+    order: 'ASC' | 'DESC' = 'DESC';
 
     @Type(() => PaginationDto)
     @ValidateNested()
-    pagination: PaginationDto;
+    pagination: PaginationDto = new PaginationDto();
 
     @IsOptional()
     @Type(() => MilestonePropertySearch)

@@ -11,12 +11,12 @@ export class PaginationDto {
         message:
             'El límite de registros por página debe ser uno de los siguientes valores: 10, 20, 30, 50 o 100',
     })
-    limit: number;
+    limit: number = 100;
 
     @IsNotEmpty({ message: 'La página es obligatoria' })
     @Transform(({ value }) => Number(value))
     @IsNumber({}, { message: 'La página debe ser un número válido' })
     @IsNotNaN({ message: 'La página debe ser un número válido' })
     @Min(1, { message: 'La página debe ser mayor que 0' })
-    page: number;
+    page: number = 1;
 }

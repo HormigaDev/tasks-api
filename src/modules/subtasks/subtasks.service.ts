@@ -15,6 +15,7 @@ import { UpdateSubtaskDto } from './DTOs/update-subtask.dto';
 import { TasksService } from '../tasks/tasks.service';
 import { TooManyRequestsException } from 'src/common/types/TooManyRequestsException.type';
 import { LogsService } from '../logs/logs.service';
+import { Task } from 'src/database/model/entities/task.entity';
 
 @Injectable()
 export class SubtasksService extends UtilsService<Subtask> {
@@ -77,32 +78,12 @@ export class SubtasksService extends UtilsService<Subtask> {
 
     async findById(id: number): Promise<Subtask> {
         try {
-            const subtask = await this.repository.findOne({
-                where: { id },
-                select: {
-                    tags: true,
-                    attachments: true,
-                    id: true,
-                    title: true,
-                    description: true,
-                    task: {
-                        id: true,
-                        user: {
-                            id: true,
-                        },
-                    },
-                    createdAt: true,
-                    updatedAt: true,
-                    priority: {
-                        id: true,
-                        name: true,
-                    },
-                    status: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            });
+            const subtask = await this.repository
+                .createQueryBuilder('s')
+                .innerJoinAndSelect('s.task', 'task')
+                .innerJoinAndSelect('task.user', 'user')
+                .where('s.id = :id and user.id = :user', { id, user: this.context.user.id })
+                .getOne();
 
             if (!subtask || subtask.task.user.id !== this.context.user.id) {
                 throw new NotFoundException(`Tarea con el ID "${id}" no encontrada`);
@@ -127,7 +108,8 @@ export class SubtasksService extends UtilsService<Subtask> {
             }
 
             return await query
-                .andWhere('subtask.task.id = :task', { task: filters.taskId })
+                .innerJoin('subtask.task', 'task')
+                .andWhere('task.id = :task', { task: filters.taskId })
                 .leftJoinAndSelect('subtask.priority', 'priority')
                 .leftJoinAndSelect('subtask.tags', 'tags')
                 .leftJoinAndSelect('subtask.attachments', 'attachments')
@@ -157,12 +139,11 @@ export class SubtasksService extends UtilsService<Subtask> {
             }
 
             await this.repository
-                .createQueryBuilder('subtask')
+                .createQueryBuilder()
                 .update()
                 .set(props)
-                .where('subtask.id = :id and subtask.task.id = :task', {
+                .where('id = :id', {
                     id,
-                    task: dto.taskId,
                 })
                 .execute();
 

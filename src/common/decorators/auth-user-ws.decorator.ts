@@ -1,7 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { PERMISSION_KEY } from './require-permissions.decorator'; // Asegurate del path correcto
 import { User } from 'src/database/model/entities/user.entity';
-import { Permissions } from '../enums/Permissions.enum';
 import { Reflector } from '@nestjs/core';
 import { WsException } from '@nestjs/websockets';
 
@@ -14,7 +13,7 @@ export const AuthUserWs = createParamDecorator((data: unknown, ctx: ExecutionCon
     }
 
     const reflector = new Reflector();
-    const meta = reflector.get<{ permissions: Permissions[]; optional: boolean }>(
+    const meta = reflector.get<{ permissions: bigint[]; optional: boolean }>(
         PERMISSION_KEY,
         ctx.getHandler(),
     );

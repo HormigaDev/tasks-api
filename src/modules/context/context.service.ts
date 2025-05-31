@@ -35,7 +35,7 @@ export class ContextService {
 
     getEntityManager(options?: { throwError: boolean }): EntityManager {
         const manager = this.storage.getStore()?.get(ENTITY_MANAGER_KEY) as EntityManager;
-        if (!manager && options.throwError) {
+        if (!manager && options?.throwError) {
             throw new Error('EntityManager no definida');
         }
         return manager;

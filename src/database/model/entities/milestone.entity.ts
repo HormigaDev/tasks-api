@@ -28,7 +28,7 @@ export class Milestone {
     @JoinColumn({ name: 'user_id' })
     user: User;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ name: 'expected_date', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     expectedDate: Date;
 
     @OneToMany(() => Task, (task) => task.milestone)
