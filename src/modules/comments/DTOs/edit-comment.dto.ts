@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, Length, Min } from 'class-validator';
 import { IsNotNaN } from 'src/common/validators/is-not-nan.dto';
 import { User } from 'src/database/model/entities/user.entity';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class EditCommentDto {
     @ApiProperty({
@@ -30,7 +30,7 @@ export class EditCommentDto {
     @Length(1, 5000, { message: 'El contenido del mensaje debe tener entre 1 y 5000 caracteres' })
     readonly content: string;
 
-    // Esta propiedad es opcional y probablemente interna, no se documenta en Swagger
+    // Esta propiedad es opcional e interna, no se documenta en Swagger
     @IsOptional()
     user?: User;
 }
