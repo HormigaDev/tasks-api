@@ -102,7 +102,12 @@ export class CommentsService extends UtilsService<Comment> {
 
     async findById(id: number, user: User): Promise<Comment> {
         try {
-            const comment = await this.repository.findOneBy({ id, user });
+            const comment = await this.repository
+                .createQueryBuilder('comment')
+                .where('comment.id = :id', { id })
+                .innerJoin('comment.user', 'user')
+                .andWhere('user.id = :userId', { userId: user.id })
+                .getOne();
             if (!comment) {
                 throw new WsException(`Comentario con ID "${id}" no encontrado`);
             }
@@ -117,7 +122,9 @@ export class CommentsService extends UtilsService<Comment> {
         try {
             const query = this.repository
                 .createQueryBuilder('comment')
-                .orderBy('comment.createdAt', 'DESC');
+                .orderBy('comment.createdAt', 'DESC')
+                .innerJoin('comment.user', 'user')
+                .where('user.id = :userId', { userId: this.context.user.id });
             this.setPagination(query, filters.pagination);
 
             return await query.getManyAndCount();

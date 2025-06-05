@@ -98,6 +98,8 @@ export class TagsService extends UtilsService<Tag> {
         try {
             const query = this.repository
                 .createQueryBuilder('tag')
+                .innerJoin('tag.user', 'user')
+                .where('user.id = :user', { user: this.context.user.id })
                 .orderBy(`tag.${filters.orderBy}`, filters.order);
 
             if (filters.query) {

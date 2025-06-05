@@ -1,8 +1,8 @@
 {
-    "name": "nest-api-template",
+    "name": "systekia-tasks-api",
     "version": "1.0.0",
     "description": "",
-    "author": "",
+    "author": "HormigaDev",
     "private": true,
     "license": "CUSTOM",
     "scripts": {
@@ -33,6 +33,7 @@
         "@nestjs/platform-express": "^10.4.17",
         "@nestjs/platform-socket.io": "^10.4.17",
         "@nestjs/platform-ws": "^10.4.17",
+        "@nestjs/swagger": "^8.1.1",
         "@nestjs/typeorm": "^10.0.2",
         "@nestjs/websockets": "^10.4.17",
         "bcrypt": "^5.1.1",
@@ -51,6 +52,7 @@
         "redis": "^4.7.0",
         "reflect-metadata": "^0.2.0",
         "rxjs": "^7.8.1",
+        "swagger-ui-express": "^5.0.1",
         "typeorm": "^0.3.20",
         "uuid": "^11.1.0",
         "winston": "^3.17.0",

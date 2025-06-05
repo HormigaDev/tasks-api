@@ -108,6 +108,8 @@ export class SubtasksService extends UtilsService<Subtask> {
 
             return await query
                 .innerJoin('subtask.task', 'task')
+                .innerJoin('task.user', 'user')
+                .where('user.id = :user', { user: this.context.user.id })
                 .andWhere('task.id = :task', { task: filters.taskId })
                 .leftJoinAndSelect('subtask.priority', 'priority')
                 .leftJoinAndSelect('subtask.tags', 'tags')

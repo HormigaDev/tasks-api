@@ -14,9 +14,6 @@ export const Permissions = {
     UpdateRoles: 1n << 7n,
     DeleteRoles: 1n << 8n,
 
-    ManageUsers: 1n << 9n,
-    ManageRoles: 1n << 10n,
-
     ReadMySelf: 1n << 11n,
     UpdateMySelf: 1n << 12n,
     DeleteMySelf: 1n << 13n,
@@ -68,9 +65,6 @@ export const PermissionsDict = [
     { id: Permissions.ReadRoles, name: 'Ver Roles' },
     { id: Permissions.UpdateRoles, name: 'Actualizar Roles' },
     { id: Permissions.DeleteRoles, name: 'Eliminar Roles' },
-
-    { id: Permissions.ManageUsers, name: 'Gestionar Usuarios' },
-    { id: Permissions.ManageRoles, name: 'Gestionar Roles' },
 
     { id: Permissions.ReadMySelf, name: 'Ver Mi Perfil' },
     { id: Permissions.UpdateMySelf, name: 'Actualizar Mi Perfil' },

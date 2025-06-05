@@ -2,6 +2,13 @@
 
 set -eu
 
+if [ -f .docker/.env ]; then
+    export $(grep -v '^#' .docker/.env | xargs)
+else
+    echo "Archivo .env no encontrado!"
+    exit 1
+fi
+
 if ! grep -q "PS1='\${debian_chroot:+(\$debian_chroot)}\[\033[01;35m\]\u@\h\[\033[01;34m\] \w \[\033[01;31m\] \[\033[01;35m\]\$ \[\033[00m\] '" /root/.bashrc; then
     echo "export PS1='\${debian_chroot:+(\$debian_chroot)}\[\033[01;35m\]\u@\h\[\033[01;34m\] \w \[\033[01;31m\] \[\033[01;35m\]\$ \[\033[00m\] '" >> /root/.bashrc
 fi
@@ -33,8 +40,13 @@ function wait_for_service() {
 chmod +x ./bin/r-backups
 chmod +x ./bin/r-perms
 
-wait_for_service "bbel-postgres" 5432
+wait_for_service "${DATABASE_HOST}" $DATABASE_PORT
 
-wait_for_service "bbel-redis" 6379
+wait_for_service "${REDIS_HOST}" $REDIS_PORT
 
-exec npm run start:prod
+if [ "${NODE_ENV}" = "development" ]; then
+    echo "Entorno de desarrollo detectado. Manteniendo contenedor activo..."
+    tail -f /dev/null
+else
+    exec npm run start:prod
+fi

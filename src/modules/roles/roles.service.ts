@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from 'src/database/model/entities/role.entity';
 import { UtilsService } from 'src/common/services/utils.service';
-import { CreateRoleDto } from 'src/common/validators/create-role.dto';
-import { UpdateRoleDto } from 'src/common/validators/update-role.dto';
+import { CreateRoleDto } from './DTOs/create-role.dto';
+import { UpdateRoleDto } from 'src/modules/roles/DTOs/update-role.dto';
 import { Repository } from 'typeorm';
 import { FindResult } from 'src/common/interfaces/find-result.interface';
 import { RoleFindFilters } from './DTOs/role-find-filters.dto';
@@ -26,21 +26,18 @@ export class RolesService extends UtilsService<Role> {
         return manager ? manager.getRepository(Role) : this._repository;
     }
 
-    async findByUser(id: number): Promise<Role[]> {
-        try {
-            return this.repository
-                .createQueryBuilder('role')
-                .innerJoin('role.users', 'user')
-                .where('user.id = :id', { id })
-                .getMany();
-        } catch (err) {
-            this.handleError('findByUser', err);
-        }
-    }
-
     async create(dto: CreateRoleDto): Promise<Role> {
         try {
             const createRole = async () => {
+                const userPermissions = BigInt(this.context.user.permissions);
+                const rolePermissions = BigInt(dto.permissions);
+
+                if ((rolePermissions & userPermissions) !== rolePermissions) {
+                    throw new ForbiddenException(
+                        'Los permisos asignados exceden los permisos del usuario',
+                    );
+                }
+
                 this.logs.setEntity(Role);
                 const role = new Role();
                 role.name = dto.name;
@@ -68,11 +65,14 @@ export class RolesService extends UtilsService<Role> {
 
     async find(filters: RoleFindFilters): Promise<FindResult<Role>> {
         try {
-            let query = this.repository.createQueryBuilder('role');
-            query = this.setPagination(query, filters.pagination);
-            query = query.orderBy(`role.${filters.orderBy}`, filters.order);
+            const query = this.repository.createQueryBuilder('role');
+            this.setPagination(query, filters.pagination);
+            query.orderBy(`role.${filters.orderBy}`, filters.order);
+            query.andWhere('(role.permissions & :userPermissions) = role.permissions', {
+                userPermissions: BigInt(this.context.user.permissions).toString(),
+            });
             if (filters.query) {
-                query = this.setQueryFilter('role', query, filters.query);
+                this.setQueryFilter('role', query, filters.query);
             }
 
             return await query.getManyAndCount();
@@ -85,8 +85,14 @@ export class RolesService extends UtilsService<Role> {
         try {
             const role = await this.repository.findOneBy({ id });
             if (!role) {
-                throw new NotFoundException('Role not found');
+                throw new NotFoundException(`Rol con ID "${id}" no encontrado`);
             }
+            const rolePermissions = BigInt(role.permissions);
+            const userPermissions = BigInt(this.context.user.permissions);
+            if ((rolePermissions & userPermissions) !== rolePermissions) {
+                throw new NotFoundException(`Rol con ID "${id}" no encontrado`);
+            }
+
             return role;
         } catch (err) {
             this.handleError('findOne', err);
@@ -96,6 +102,13 @@ export class RolesService extends UtilsService<Role> {
     async update(id: number, dto: UpdateRoleDto): Promise<Role> {
         try {
             const updateRole = async () => {
+                if (dto.permissions) {
+                    this.validatePermissions(
+                        BigInt(dto.permissions),
+                        BigInt(this.context.user.permissions),
+                    );
+                }
+
                 this.logs.setEntity(Role);
                 const role = await this.findOne(id);
                 await this.logs.setOld(role.id);
@@ -124,6 +137,11 @@ export class RolesService extends UtilsService<Role> {
             const deleteRole = async () => {
                 this.logs.setEntity(Role);
                 const role = await this.findOne(id);
+                this.validatePermissions(
+                    BigInt(role.permissions),
+                    BigInt(this.context.user.permissions),
+                );
+
                 await this.logs.setOld(role.id);
                 await this.repository.delete(id);
                 await this.logs.save();
@@ -141,6 +159,14 @@ export class RolesService extends UtilsService<Role> {
                   });
         } catch (err) {
             this.handleError('delete', err);
+        }
+    }
+
+    private validatePermissions(rolePermissions: bigint, userPermissions: bigint): void {
+        if ((rolePermissions & userPermissions) !== rolePermissions) {
+            throw new ForbiddenException(
+                'Los permisos asignados al rol exceden los permisos del usuario',
+            );
         }
     }
 }
