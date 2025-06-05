@@ -32,6 +32,19 @@ Este projeto utiliza duas dependências desenvolvidas em Rust, totalmente audit�
 - Registro detalhado de histórico de ações para auditoria, com dados em JSON.
 - Configuração de limites específicos por usuário, incluindo máximo de tarefas, tarefas por marco, tags, categorias, subtarefas por tarefa, comentários, marcos e armazenamento para anexos.
 
+## Tecnologias Utilizadas
+
+- **Backend:** NestJS, TypeORM, TypeScript
+- **Banco de dados:** PostgreSQL
+- **Cache:** Redis
+- **Autenticação:** JWT e bcrypt para hash de senhas
+- **Armazenamento de arquivos:** Comunicação via gRPC com um serviço em Rust ([r-filestorage](https://github.com/HormigaDev/r-filestorage))
+- **Permissões:** Sistema baseado em bitmask usando [r-perms](https://github.com/HormigaDev/r-perms) para o cálculo de permissões
+- **Validação:** class-validator, class-transformer
+- **Tempo real:** WebSockets usando socket.io (para comentários e notificações)
+- **Infraestrutura:** Docker e Docker Compose
+- **Serviços auxiliares:** Binários em Rust ([r-backups](https://github.com/HormigaDev/r-backups) para gerenciamento do banco de dados e [r-perms](https://github.com/HormigaDev/r-perms) para permissões)
+
 ## Instalação
 
 ### 1. Requisitos

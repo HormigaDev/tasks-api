@@ -13,6 +13,7 @@ Lightweight task management API (TO-DO), designed as a flexible foundation for b
 
 - [Dependencies](#dependencies)
 - [Main Features](#main-features)
+- [Technologies Used](#technologies-used)
 - [Installation](#installation)
 - [Documentation](#documentation)
 - [License](#license)
@@ -36,6 +37,19 @@ This project relies on two fully auditable Rust-based dependencies:
 - Scheduled notification system associated with tasks.
 - Detailed history log for auditing with JSON data.
 - User-specific limits configuration including max tasks, tasks per milestone, tags, categories, subtasks per task, comments, milestones, and attachment storage.
+
+## Technologies Used
+
+- **Backend:** NestJS, TypeORM, TypeScript
+- **Database:** PostgreSQL
+- **Cache:** Redis
+- **Authentication:** JWT, bcrypt for password hashing
+- **File Storage:** gRPC communication with a Rust-based file storage service ([r-filestorage](https://github.com/HormigaDev/r-filestorage))
+- **Permissions:** Bitmask-based system using [r-perms](https://github.com/HormigaDev/r-perms) to calculate permissions
+- **Validation:** class-validator, class-transformer
+- **Real-time:** WebSockets via socket.io (for comments and notifications)
+- **Infrastructure:** Docker & Docker Compose
+- **Support Services:** Rust binaries ([r-backups](https://github.com/HormigaDev/r-backups) for DB management, [r-perms](https://github.com/HormigaDev/r-perms) for permissions)
 
 ## Installation
 
