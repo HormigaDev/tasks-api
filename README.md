@@ -11,12 +11,20 @@ Lightweight task management API (TO-DO), designed as a flexible foundation for b
 
 ## Table of Contents
 
+- [Dependencies](#dependencies)
 - [Main Features](#main-features)
 - [Installation](#installation)
 - [Documentation](#documentation)
 - [License](#license)
 - [Contributing](#contributing)
 - [Contact](#contact)
+
+## Dependencies
+
+This project relies on two fully auditable Rust-based dependencies:
+
+- [R-BACKUPS – Database manager](https://github.com/HormigaDev/r-backups)
+- [R-PERMS – Simple and fast permissions calculator](https://github.com/HormigaDev/r-perms)
 
 ## Main Features
 

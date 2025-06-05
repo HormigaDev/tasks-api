@@ -6,12 +6,20 @@ API leve para gerenciamento de tarefas (TO-DO), projetada como uma base flexíve
 
 ## Índice
 
+- [Dependências](#dependências)
 - [Características principais](#características-principais)
 - [Instalação](#instalação)
 - [Documentação](#documentação)
 - [Licença](#licença)
 - [Contribuições](#contribuições)
 - [Contato](#contato)
+
+## Dependências
+
+Este projeto utiliza duas dependências desenvolvidas em Rust, totalmente auditáveis:
+
+- [R-BACKUPS – Gerenciador de banco de dados](https://github.com/HormigaDev/r-backups)
+- [R-PERMS – Calculadora de permissões simples e rápida](https://github.com/HormigaDev/r-perms)
 
 ## Características principais
 
