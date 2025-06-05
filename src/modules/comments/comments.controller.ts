@@ -26,5 +26,5 @@ export class CommentsController {
         return { comments, count };
     }
 
-    // Nota: El resto de funcionalidades CRUD se manejan vía WebSocket
+    // ? Nota: El resto de funcionalidades CRUD se manejan vía WebSocket
 }
