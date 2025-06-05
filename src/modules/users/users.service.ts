@@ -165,6 +165,20 @@ export class UsersService extends UtilsService<User> {
                     throw new BadRequestException('Uno o más roles no existen');
                 }
 
+                const currentUserPermissions = BigInt(this.context.user.permissions);
+                const combinedRolePermissions = roles.reduce(
+                    (acc, role) => acc | BigInt(role.permissions),
+                    BigInt(0),
+                );
+                if (
+                    (combinedRolePermissions & currentUserPermissions) !==
+                    combinedRolePermissions
+                ) {
+                    throw new ForbiddenException(
+                        'No puedes asignar roles con permisos superiores a los tuyos',
+                    );
+                }
+
                 savedUser.roles = roles;
 
                 await manager.createQueryBuilder().relation(User, 'roles').of(savedUser).add(roles);
@@ -234,6 +248,20 @@ export class UsersService extends UtilsService<User> {
 
                 if (newRoles.length !== roles.length) {
                     throw new BadRequestException('Uno o más roles no existen');
+                }
+
+                const currentUserPermissions = BigInt(this.context.user.permissions);
+                const combinedRolePermissions = newRoles.reduce(
+                    (acc, role) => acc | BigInt(role.permissions),
+                    BigInt(0),
+                );
+                if (
+                    (combinedRolePermissions & currentUserPermissions) !==
+                    combinedRolePermissions
+                ) {
+                    throw new ForbiddenException(
+                        'No puedes asignar roles con permisos superiores a los tuyos',
+                    );
                 }
 
                 await this.repository

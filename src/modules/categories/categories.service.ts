@@ -65,12 +65,14 @@ export class CategoriesService extends UtilsService<Category> {
 
     async find(filters: CategoryFindFiltersDto): Promise<FindResult<Category>> {
         try {
-            let query = this.repository
+            const query = this.repository
                 .createQueryBuilder('cat')
-                .orderBy(`cat.${filters.orderBy}`, filters.order);
-            query = this.setPagination(query, filters.pagination);
+                .orderBy(`cat.${filters.orderBy}`, filters.order)
+                .innerJoin('cat.user', 'user')
+                .where('user.id = :user', { user: this.context.user.id });
+            this.setPagination(query, filters.pagination);
             if (filters.query) {
-                query = query.andWhere('cat.name ilike :value', { value: `%${filters.query}%` });
+                query.andWhere('cat.name ilike :value', { value: `%${filters.query}%` });
             }
 
             return await query.getManyAndCount();

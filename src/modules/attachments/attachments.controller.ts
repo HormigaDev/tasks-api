@@ -14,7 +14,7 @@ import {
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { UserStatusGuard } from 'src/common/guards/user-status.guard';
@@ -25,7 +25,17 @@ import { IdPipe } from 'src/common/pipes/id.pipe';
 import { Sizes } from 'src/common/Sizes';
 import { Response } from 'express';
 import { validate as isUuid } from 'uuid';
+import {
+    ApiBearerAuth,
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiConsumes,
+    ApiBody,
+} from '@nestjs/swagger';
 
+@ApiTags('Attachments')
+@ApiBearerAuth('jwt-token')
 @Controller('attachments')
 @UseGuards(JwtAuthGuard, UserStatusGuard, PermissionsGuard)
 export class AttachmentsController {
@@ -34,6 +44,9 @@ export class AttachmentsController {
     @Get('/download/:uuid')
     @HttpCode(200)
     @RequirePermissions([Permissions.ReadAttachments])
+    @ApiOperation({ summary: 'Descargar archivo adjunto por UUID' })
+    @ApiResponse({ status: 200, description: 'Archivo descargado correctamente' })
+    @ApiResponse({ status: 400, description: 'UUID inválido' })
     async getFile(@Param('uuid') uuid: string, @Res() res: Response) {
         if (!isUuid(uuid)) {
             throw new BadRequestException('Id del archivo inválido');
@@ -56,6 +69,20 @@ export class AttachmentsController {
         }),
     )
     @RequirePermissions([Permissions.SaveAttachments])
+    @ApiOperation({ summary: 'Subir un archivo adjunto' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+            required: ['file'],
+        },
+    })
     async uploadFile(@UploadedFile() file: Express.Multer.File) {
         if (!file) {
             throw new BadRequestException('No hay archivo para guardar');
@@ -68,11 +95,28 @@ export class AttachmentsController {
     @Post('upload-multiple')
     @HttpCode(201)
     @UseInterceptors(
-        FileInterceptor('files', {
+        FilesInterceptor('files', 10, {
             limits: { fileSize: Sizes.megabytes(2) },
         }),
     )
     @RequirePermissions([Permissions.SaveAttachments])
+    @ApiOperation({ summary: 'Subir múltiples archivos adjuntos' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                files: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        format: 'binary',
+                    },
+                },
+            },
+            required: ['files'],
+        },
+    })
     async uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[]) {
         if (!Array.isArray(files)) {
             throw new BadRequestException('No fue informado el array de archivos');
@@ -100,6 +144,8 @@ export class AttachmentsController {
     @Delete(':id')
     @HttpCode(204)
     @RequirePermissions([Permissions.DeleteAttachments])
+    @ApiOperation({ summary: 'Eliminar archivo adjunto por ID' })
+    @ApiResponse({ status: 204, description: 'Archivo eliminado correctamente' })
     async deleteFile(@Param('id', IdPipe) id: number) {
         await this.service.delete(id);
         return {};
@@ -108,6 +154,7 @@ export class AttachmentsController {
     @Delete('/')
     @HttpCode(204)
     @RequirePermissions([Permissions.DeleteAttachments])
+    @ApiOperation({ summary: 'Eliminar múltiples archivos adjuntos (pendiente de implementación)' })
     async deleteMultipleFiles(@Query('ids') idList: string) {
         throw new NotImplementedException('Futuramente...');
     }

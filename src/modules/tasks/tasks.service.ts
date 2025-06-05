@@ -58,6 +58,8 @@ export class TasksService extends UtilsService<Task> {
                     .createQueryBuilder('tag')
                     .select(['tag.id'])
                     .where('tag.id in (:...tags)', { tags: tagsId })
+                    .innerJoin('tag.user', 'user')
+                    .andWhere('user.id = :user', { user: this.context.user.id })
                     .getMany();
 
                 if (tags.length !== tagsId.length) {
@@ -80,6 +82,8 @@ export class TasksService extends UtilsService<Task> {
                     .createQueryBuilder('a')
                     .select(['a.id'])
                     .where('a.id in (:...attachments)', { attachments: attachmentsId })
+                    .innerJoin('a.user', 'user')
+                    .andWhere('user.id = :user', { user: this.context.user.id })
                     .getMany();
 
                 if (attachments.length !== attachmentsId.length) {

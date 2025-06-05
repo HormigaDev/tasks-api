@@ -1,6 +1,6 @@
 services:
     tasks-api:
-        container_name: bbel-tasks-api
+        container_name: app-tasks-api
         build:
             context: ../
             dockerfile: .docker/Dockerfile

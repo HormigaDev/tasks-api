@@ -118,7 +118,9 @@ export class MilestonesService extends UtilsService<Milestone> {
                 await this.updateEntity(id, dto, this.repository);
                 await this.logs.setNew(id);
                 await this.logs.save();
-                return this.repository.findOneBy({ id });
+                const milestone = await this.repository.findOneBy({ id });
+                delete milestone.user;
+                return milestone;
             };
             return this.context.getEntityManager()
                 ? await updateMilestone()

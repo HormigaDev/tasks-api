@@ -225,8 +225,12 @@ export class AttachmentsService extends UtilsService<Attachment> {
 
     async validateTotalStorage(): Promise<void> {
         try {
-            const size = await this.repository.sum('size');
-            if (size >= this.context.user.limits.maxAttachmentsStorage) {
+            const size = await this.repository
+                .createQueryBuilder('a')
+                .select('SUM(a.size)', 'total')
+                .where('a.user = :user', { user: this.context.user.id })
+                .getRawOne();
+            if (Number(size.total) >= this.context.user.limits.maxAttachmentsStorage) {
                 throw new TooManyRequestsException('Límite de almacenamiento alcanzado');
             }
         } catch (err) {
