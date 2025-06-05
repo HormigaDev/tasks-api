@@ -1,5 +1,10 @@
 # 🛡️ Security Policy
 
+## Languages
+
+- [🇪🇸 Español](./docs/security/ES.md)
+- [🇧🇷 Português](./docs/security/PT.md)
+
 ## 🚧 Supported Versions
 
 | Version | Supported |
